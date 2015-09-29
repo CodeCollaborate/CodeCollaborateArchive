@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -6,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"github.com/gorilla/websocket"
+	"encoding/json"
+	models "github.com/obsessiveorange/CodeCollaborate/modules/models"
 )
 
 var addr = flag.String("addr", ":80", "http service address")
@@ -17,16 +18,16 @@ var upgrader = websocket.Upgrader{
 
 } // use default options
 
-func echo(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.Error(w, "Not found", 404)
+func echo(responseWriter http.ResponseWriter, request *http.Request) {
+	if request.URL.Path != "/ws/" {
+		http.Error(responseWriter, "Not found", 404)
 		return
 	}
-	if r.Method != "GET" {
-		http.Error(w, "Method not allowed", 405)
+	if request.Method != "GET" {
+		http.Error(responseWriter, "Method not allowed", 405)
 		return
 	}
-	c, err := upgrader.Upgrade(w, r, nil)
+	c, err := upgrader.Upgrade(responseWriter, request, nil)
 	if err != nil {
 		log.Print("upgrade:", err)
 		return
@@ -38,7 +39,15 @@ func echo(w http.ResponseWriter, r *http.Request) {
 			log.Println("read:", err)
 			break
 		}
-		log.Printf("recv: %s", message)
+
+		// Deserialize data from json.
+		// eg: {   "Action": "testAction",   "Resource": "testResouce",   "Id": 123,   "CommitHash": "4as5d4w5as" }
+		var messageObj models.Message
+		if err := json.Unmarshal(message, &messageObj); err != nil {
+			panic(err)
+		}
+		log.Println(messageObj.ToString())
+
 		err = c.WriteMessage(mt, message)
 		if err != nil {
 			log.Println("write:", err)
@@ -51,7 +60,7 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 
-	http.HandleFunc("/", echo)
+	http.HandleFunc("/ws/", echo)
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
