@@ -1,13 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"log"
 	"net/http"
+
+	models "github.com/CodeCollaborate/CodeCollaborate/modules/base"
+	"github.com/CodeCollaborate/CodeCollaborate/modules/file"
 	"github.com/gorilla/websocket"
-	"encoding/json"
-	models "github.com/obsessiveorange/CodeCollaborate/modules/base"
-	"github.com/obsessiveorange/CodeCollaborate/modules/file"
 )
 
 var addr = flag.String("addr", ":80", "http service address")
@@ -16,7 +17,6 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true
 	},
-
 } // use default options
 
 func echo(responseWriter http.ResponseWriter, request *http.Request) {
@@ -51,7 +51,7 @@ func echo(responseWriter http.ResponseWriter, request *http.Request) {
 
 		} else {
 
-			switch baseMessageObj.Resource{
+			switch baseMessageObj.Resource {
 			case "Project":
 			case "File":
 				// eg: {"Tag": 112, "Action": "Update", "Resource": "File", "ResId": 511, "CommitHash": "4as5d4w5as", "Changes": "@@ -40,16 +40,17 @@\n almost i\n+t\n n shape"}
@@ -61,11 +61,11 @@ func echo(responseWriter http.ResponseWriter, request *http.Request) {
 				if err := json.Unmarshal(message, &fileMessageObj); err != nil {
 
 					response = models.NewFailResponse(-101, baseMessageObj.Tag, "Error deserializing JSON to FileMessage")
-					break;
+					break
 				}
 
 				// Add BaseMessage reference
-				fileMessageObj.BaseMessage = baseMessageObj;
+				fileMessageObj.BaseMessage = baseMessageObj
 
 				// TODO: Do something.
 
@@ -78,7 +78,7 @@ func echo(responseWriter http.ResponseWriter, request *http.Request) {
 			default:
 				// Invalid resource type
 				response = models.NewFailResponse(-100, baseMessageObj.Tag, "Invalid resource type")
-				break;
+				break
 			}
 		}
 

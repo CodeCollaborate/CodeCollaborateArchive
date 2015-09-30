@@ -2,7 +2,8 @@ package file
 
 import (
 	"bytes"
-	"github.com/obsessiveorange/CodeCollaborate/modules/base"
+
+	"github.com/CodeCollaborate/CodeCollaborate/modules/base"
 )
 
 type FileMessage struct {
