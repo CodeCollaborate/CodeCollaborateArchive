@@ -2,7 +2,6 @@ package file
 
 import (
 	"bytes"
-
 	"github.com/CodeCollaborate/CodeCollaborate/modules/base"
 )
 
