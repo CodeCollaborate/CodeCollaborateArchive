@@ -1,0 +1,2 @@
+-100: Error deserializing JSON
+-101: Invalid resource type

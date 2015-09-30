@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"github.com/gorilla/websocket"
 	"encoding/json"
-	models "github.com/obsessiveorange/CodeCollaborate/modules/models"
+	models "github.com/obsessiveorange/CodeCollaborate/modules/base"
+	"github.com/obsessiveorange/CodeCollaborate/modules/file"
 )
 
 var addr = flag.String("addr", ":80", "http service address")
@@ -35,25 +36,75 @@ func echo(responseWriter http.ResponseWriter, request *http.Request) {
 	defer c.Close()
 	for {
 		mt, message, err := c.ReadMessage()
+		var response models.WSResponse
 		if err != nil {
-			log.Println("read:", err)
+			log.Println("Error reading from WebSocket:", err)
 			break
 		}
 
 		// Deserialize data from json.
-		// eg: {   "Action": "testAction",   "Resource": "testResouce",   "Id": 123,   "CommitHash": "4as5d4w5as" }
-		var messageObj models.Message
-		if err := json.Unmarshal(message, &messageObj); err != nil {
-			panic(err)
-		}
-		log.Println(messageObj.ToString())
+		// eg: {"Tag": 112, "Action": "Update", "Resource": "File", "ResId": 511, "CommitHash": "4as5d4w5as"}
+		var baseMessageObj models.BaseMessage
+		if err := json.Unmarshal(message, &baseMessageObj); err != nil {
 
-		err = c.WriteMessage(mt, message)
+			response = models.NewFailResponse(-101, baseMessageObj.Tag, "Error deserializing JSON to BaseMessage")
+
+		} else {
+
+			switch baseMessageObj.Resource{
+			case "Project":
+			case "File":
+				// eg: {"Tag": 112, "Action": "Update", "Resource": "File", "ResId": 511, "CommitHash": "4as5d4w5as", "Changes": "@@ -40,16 +40,17 @@\n almost i\n+t\n n shape"}
+
+				// Deserialize FileMessage from JSON
+				var fileMessageObj file.FileMessage
+				if err := json.Unmarshal(message, &fileMessageObj); err != nil {
+
+					response = models.NewFailResponse(-101, baseMessageObj.Tag, "Error deserializing JSON to FileMessage")
+					break;
+				}
+
+				// Add BaseMessage reference
+				fileMessageObj.BaseMessage = baseMessageObj;
+
+				// TODO: Do something.
+
+				// Notify success.
+				response = models.NewSuccessResponse(baseMessageObj.Tag, nil)
+
+				// For debugging
+				log.Println(fileMessageObj.ToString())
+
+			default:
+				// Invalid resource type
+				response = models.NewFailResponse(-100, baseMessageObj.Tag, "Invalid resource type")
+				break;
+			}
+		}
+
+		err = sendWebSocketResponse(c, mt, response)
 		if err != nil {
-			log.Println("write:", err)
 			break
 		}
 	}
+}
+
+func sendWebSocketResponse(conn *websocket.Conn, messageType int, response interface{}) error {
+
+	respBytes, err := json.Marshal(response)
+	log.Println(string(respBytes[:]))
+
+	if err != nil {
+		log.Println("Error serializing response to JSON:", err)
+		return err
+	}
+
+	err = conn.WriteMessage(messageType, respBytes)
+	if err != nil {
+		log.Println("Error writing to WebSocket:", err)
+		return err
+	}
+	return nil
 }
 
 func main() {
