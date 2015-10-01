@@ -24,3 +24,14 @@ func (message *FileMessage) ToString() string {
 
 	return buffer.String()
 }
+
+func (message *FileMessage) GetNotification() *base.BaseNotification {
+	notification := new(base.BaseNotification)
+	notification.Action = message.BaseMessage.Action
+	notification.Resource = message.BaseMessage.Resource
+	notification.ResId = message.BaseMessage.ResId
+	notification.Data = map[string]interface{}{
+		"changes":message.Changes,
+	}
+	return notification
+}

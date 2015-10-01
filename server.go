@@ -5,9 +5,9 @@ import (
 	"flag"
 	"log"
 	"net/http"
-	models "github.com/CodeCollaborate/CodeCollaborate/modules/base"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/file"
 	"github.com/gorilla/websocket"
+	"github.com/CodeCollaborate/CodeCollaborate/modules/base"
+	"github.com/CodeCollaborate/CodeCollaborate/modules/file"
 )
 
 var addr = flag.String("addr", ":80", "http service address")
@@ -17,6 +17,8 @@ var upgrader = websocket.Upgrader{
 		return true
 	},
 } // use default options
+
+var webSockets []*websocket.Conn
 
 func echo(responseWriter http.ResponseWriter, request *http.Request) {
 	if request.URL.Path != "/ws/" {
@@ -32,10 +34,15 @@ func echo(responseWriter http.ResponseWriter, request *http.Request) {
 		log.Print("upgrade:", err)
 		return
 	}
+
+	webSockets = append(webSockets, c)
+
 	defer c.Close()
+	defer socketDisconnected(c)
+
 	for {
 		mt, message, err := c.ReadMessage()
-		var response models.WSResponse
+		var response base.WSResponse
 		if err != nil {
 			log.Println("Error reading from WebSocket:", err)
 			break
@@ -43,10 +50,10 @@ func echo(responseWriter http.ResponseWriter, request *http.Request) {
 
 		// Deserialize data from json.
 		// eg: {"Tag": 112, "Action": "Update", "Resource": "File", "ResId": 511, "CommitHash": "4as5d4w5as"}
-		var baseMessageObj models.BaseMessage
+		var baseMessageObj base.BaseMessage
 		if err := json.Unmarshal(message, &baseMessageObj); err != nil {
 
-			response = models.NewFailResponse(-101, baseMessageObj.Tag, "Error deserializing JSON to BaseMessage")
+			response = base.NewFailResponse(-101, baseMessageObj.Tag, nil)
 
 		} else {
 
@@ -59,7 +66,7 @@ func echo(responseWriter http.ResponseWriter, request *http.Request) {
 				var fileMessageObj file.FileMessage
 				if err := json.Unmarshal(message, &fileMessageObj); err != nil {
 
-					response = models.NewFailResponse(-101, baseMessageObj.Tag, "Error deserializing JSON to FileMessage")
+					response = base.NewFailResponse(-102, baseMessageObj.Tag, nil)
 					break
 				}
 
@@ -68,29 +75,43 @@ func echo(responseWriter http.ResponseWriter, request *http.Request) {
 
 				// TODO: Do something.
 
-				// Notify success.
-				response = models.NewSuccessResponse(baseMessageObj.Tag, nil)
+				// Notify success; return new version number.
+				response = base.NewSuccessResponse(baseMessageObj.Tag, nil)
 
-				// For debugging
-				log.Println(fileMessageObj.ToString())
+				// Notify all connected clients
+				// TODO: Change to use RabbitMQ or Redis
+				notification := fileMessageObj.GetNotification()
+				for i := range webSockets {
+					sendWebSocketMessage(webSockets[i], websocket.TextMessage, notification)
+				}
 
 			default:
 				// Invalid resource type
-				response = models.NewFailResponse(-100, baseMessageObj.Tag, "Invalid resource type")
+				response = base.NewFailResponse(-100, baseMessageObj.Tag, nil)
 				break
 			}
 		}
 
-		err = sendWebSocketResponse(c, mt, response)
+		err = sendWebSocketMessage(c, mt, response)
 		if err != nil {
 			break
 		}
 	}
 }
 
-func sendWebSocketResponse(conn *websocket.Conn, messageType int, response interface{}) error {
+func socketDisconnected(conn *websocket.Conn) {
+	for p, v := range webSockets {
+		if (v == conn) {
+			copy(webSockets[p:], webSockets[p + 1:])
+			webSockets[len(webSockets) - 1] = nil // or the zero value of T
+			webSockets = webSockets[:len(webSockets) - 1]
+		}
+	}
+}
 
-	respBytes, err := json.Marshal(response)
+func sendWebSocketMessage(conn *websocket.Conn, messageType int, message interface{}) error {
+
+	respBytes, err := json.Marshal(message)
 	log.Println(string(respBytes[:]))
 
 	if err != nil {
