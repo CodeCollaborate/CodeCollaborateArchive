@@ -5,13 +5,13 @@ import (
 	"github.com/CodeCollaborate/CodeCollaborate/modules/base"
 )
 
-type FileMessage struct {
-	BaseMessage base.BaseMessage // Add, Update, Remove
+type FileRequest struct {
+	BaseMessage base.BaseRequest // Add, Update, Remove
 	Changes     string           // Client-Computed changes (patch).
 	CommitHash  string           // Hash of last commit (if any)
 }
 
-func (message *FileMessage) ToString() string {
+func (message *FileRequest) ToString() string {
 
 	var buffer bytes.Buffer
 
@@ -25,8 +25,8 @@ func (message *FileMessage) ToString() string {
 	return buffer.String()
 }
 
-func (message *FileMessage) GetNotification() *base.BaseNotification {
-	notification := new(base.BaseNotification)
+func (message *FileRequest) GetNotification() *base.WSNotification {
+	notification := new(base.WSNotification)
 	notification.Action = message.BaseMessage.Action
 	notification.Resource = message.BaseMessage.Resource
 	notification.ResId = message.BaseMessage.ResId

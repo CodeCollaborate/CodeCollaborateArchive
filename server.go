@@ -20,7 +20,7 @@ var upgrader = websocket.Upgrader{
 
 var webSockets []*websocket.Conn
 
-func echo(responseWriter http.ResponseWriter, request *http.Request) {
+func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 	if request.URL.Path != "/ws/" {
 		http.Error(responseWriter, "Not found", 404)
 		return
@@ -29,19 +29,19 @@ func echo(responseWriter http.ResponseWriter, request *http.Request) {
 		http.Error(responseWriter, "Method not allowed", 405)
 		return
 	}
-	c, err := upgrader.Upgrade(responseWriter, request, nil)
+	wsConn, err := upgrader.Upgrade(responseWriter, request, nil)
 	if err != nil {
 		log.Print("upgrade:", err)
 		return
 	}
 
-	webSockets = append(webSockets, c)
+	webSockets = append(webSockets, wsConn)
 
-	defer c.Close()
-	defer socketDisconnected(c)
+	defer wsConn.Close()
+	defer socketDisconnected(wsConn)
 
 	for {
-		mt, message, err := c.ReadMessage()
+		messageType, message, err := wsConn.ReadMessage()
 		var response base.WSResponse
 		if err != nil {
 			log.Println("Error reading from WebSocket:", err)
@@ -50,7 +50,7 @@ func echo(responseWriter http.ResponseWriter, request *http.Request) {
 
 		// Deserialize data from json.
 		// eg: {"Tag": 112, "Action": "Update", "Resource": "File", "ResId": 511, "CommitHash": "4as5d4w5as"}
-		var baseMessageObj base.BaseMessage
+		var baseMessageObj base.BaseRequest
 		if err := json.Unmarshal(message, &baseMessageObj); err != nil {
 
 			response = base.NewFailResponse(-101, baseMessageObj.Tag, nil)
@@ -63,7 +63,7 @@ func echo(responseWriter http.ResponseWriter, request *http.Request) {
 				// eg: {"Tag": 112, "Action": "Update", "Resource": "File", "ResId": 511, "CommitHash": "4as5d4w5as", "Changes": "@@ -40,16 +40,17 @@\n almost i\n+t\n n shape"}
 
 				// Deserialize FileMessage from JSON
-				var fileMessageObj file.FileMessage
+				var fileMessageObj file.FileRequest
 				if err := json.Unmarshal(message, &fileMessageObj); err != nil {
 
 					response = base.NewFailResponse(-102, baseMessageObj.Tag, nil)
@@ -92,7 +92,7 @@ func echo(responseWriter http.ResponseWriter, request *http.Request) {
 			}
 		}
 
-		err = sendWebSocketMessage(c, mt, response)
+		err = sendWebSocketMessage(wsConn, messageType, response)
 		if err != nil {
 			break
 		}
@@ -131,7 +131,7 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 
-	http.HandleFunc("/ws/", echo)
+	http.HandleFunc("/ws/", handleWSConn)
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)

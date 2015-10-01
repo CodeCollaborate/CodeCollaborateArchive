@@ -33,14 +33,14 @@ func newBaseResponse(Status int, Tag int64, Data map[string]interface{}) WSRespo
 	return baseResponse
 }
 
-type BaseMessage struct {
+type BaseRequest struct {
 	Tag      int64  // Request tag
 	Action   string // Add, Update, Remove
 	Resource string // Project vs file
 	ResId    int64  // Id of resource
 }
 
-func (message *BaseMessage) ToString() string {
+func (message *BaseRequest) ToString() string {
 
 	var buffer bytes.Buffer
 
@@ -53,7 +53,7 @@ func (message *BaseMessage) ToString() string {
 	return buffer.String()
 }
 
-type BaseNotification struct {
+type WSNotification struct {
 	Action   string                 // Add, Update, Remove
 	Resource string                 // Project vs file
 	ResId    int64                  // Id of resource
