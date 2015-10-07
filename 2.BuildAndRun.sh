@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 git pull
 go build server.go
 sudo cp -f etc/init.d/CodeCollaborate /etc/init.d/

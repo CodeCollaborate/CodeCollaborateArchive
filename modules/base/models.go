@@ -2,7 +2,6 @@ package base
 
 import (
 	"bytes"
-	"strconv"
 )
 
 /************************************************
@@ -37,7 +36,9 @@ type BaseRequest struct {
 	Tag      int64  // Request tag
 	Action   string // Add, Update, Remove
 	Resource string // Project vs file
-	ResId    int64  // Id of resource
+	ResId    string // Id of resource
+	Username string // Token
+	Token    string // Token
 }
 
 func (message *BaseRequest) ToString() string {
@@ -48,7 +49,7 @@ func (message *BaseRequest) ToString() string {
 	buffer.WriteString(" ")
 	buffer.WriteString(message.Resource)
 	buffer.WriteString(": ")
-	buffer.WriteString(strconv.FormatInt(message.ResId, 10))
+	buffer.WriteString(message.ResId)
 
 	return buffer.String()
 }
@@ -56,6 +57,6 @@ func (message *BaseRequest) ToString() string {
 type WSNotification struct {
 	Action   string                 // Add, Update, Remove
 	Resource string                 // Project vs file
-	ResId    int64                  // Id of resource
+	ResId    string                 // Id of resource
 	Data     map[string]interface{} // Any other data
 }

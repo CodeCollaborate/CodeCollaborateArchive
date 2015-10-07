@@ -7,8 +7,13 @@ import (
 	"net/http"
 	"github.com/gorilla/websocket"
 	"github.com/CodeCollaborate/CodeCollaborate/modules/base"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/file"
+	"gopkg.in/mgo.v2"
+	"github.com/CodeCollaborate/CodeCollaborate/modules/file/models"
+	"github.com/CodeCollaborate/CodeCollaborate/modules/user/models"
+	"github.com/CodeCollaborate/CodeCollaborate/modules/user/requests"
+"strings"
 )
+var session *mgo.Session
 
 var addr = flag.String("addr", ":80", "http service address")
 
@@ -42,53 +47,100 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 	for {
 		messageType, message, err := wsConn.ReadMessage()
-		var response base.WSResponse
+		var response base.WSResponse = base.NewFailResponse(-0, 0, nil)
 		if err != nil {
 			log.Println("Error reading from WebSocket:", err)
 			break
 		}
 
 		// Deserialize data from json.
-		// eg: {"Tag": 112, "Action": "Update", "Resource": "File", "ResId": 511, "CommitHash": "4as5d4w5as"}
 		var baseMessageObj base.BaseRequest
 		if err := json.Unmarshal(message, &baseMessageObj); err != nil {
 
-			response = base.NewFailResponse(-101, baseMessageObj.Tag, nil)
+			response = base.NewFailResponse(-1, baseMessageObj.Tag, map[string]interface{}{"Error:":err})
 
 		} else {
+			if !(strings.Compare("User", baseMessageObj.Resource) == 0 && (strings.Compare("Register", baseMessageObj.Action) == 0 || strings.Compare("Login", baseMessageObj.Action) == 0)) && !userModels.CheckAuth(session, baseMessageObj) {
+				response = base.NewFailResponse(-106, baseMessageObj.Tag, nil)
+			} else {
 
-			switch baseMessageObj.Resource {
-			case "Project":
-			case "File":
-				// eg: {"Tag": 112, "Action": "Update", "Resource": "File", "ResId": 511, "CommitHash": "4as5d4w5as", "Changes": "@@ -40,16 +40,17 @@\n almost i\n+t\n n shape"}
+				switch baseMessageObj.Resource {
+				case "Project":
+				case "File":
+					// eg: {"Tag": 112, "Action": "Update", "Resource": "File", "ResId": "511", "CommitHash": "4as5d4w5as", "Changes": "@@ -40,16 +40,17 @@\n almost i\n+t\n n shape", "Username": "abcd", "Token": "$2a$10$E8wmUi8B.yrO2XqDnXNed.mpOoj3lRITQgb5AOnGu.0snFJwNzYoS"}
 
-				// Deserialize FileMessage from JSON
-				var fileMessageObj file.FileRequest
-				if err := json.Unmarshal(message, &fileMessageObj); err != nil {
+					// Deserialize FileMessage from JSON
+					var fileMessageObj file.FileRequest
+					if err := json.Unmarshal(message, &fileMessageObj); err != nil {
 
-					response = base.NewFailResponse(-102, baseMessageObj.Tag, nil)
+						response = base.NewFailResponse(-300, baseMessageObj.Tag, nil)
+						break
+					}
+
+					// Add BaseMessage reference
+					fileMessageObj.BaseMessage = baseMessageObj
+
+					// TODO: Do something.
+
+					// Notify success; return new version number.
+					response = base.NewSuccessResponse(baseMessageObj.Tag, nil)
+
+					// Notify all connected clients
+					// TODO: Change to use RabbitMQ or Redis
+					notification := fileMessageObj.GetNotification()
+					for _, WSConnection := range webSockets {
+						sendWebSocketMessage(WSConnection, websocket.TextMessage, notification)
+					}
+				case "User":
+					// Deserialize FileMessage from JSON
+					switch baseMessageObj.Action {
+					case "Register":
+
+						// {"Resource":"User", "Action":"Register", "Username":"abcd", "Email":"abcd@efgh.edu", "Password":"abcd1234"}
+						var userRegisterRequest userRequests.UserRegisterRequest
+						if err := json.Unmarshal(message, &userRegisterRequest); err != nil {
+
+							response = base.NewFailResponse(-101, baseMessageObj.Tag, nil)
+							break
+						}
+
+						if err := userModels.Register(session, userRegisterRequest); err != nil {
+							if mgo.IsDup(err) {
+								response = base.NewFailResponse(-103, baseMessageObj.Tag, nil)
+							} else {
+								response = base.NewFailResponse(-102, baseMessageObj.Tag, nil)
+							}
+							break;
+						}
+
+						response = base.NewSuccessResponse(baseMessageObj.Tag, nil)
+					case "Login":
+
+						// {"Resource":"User", "Action":"Login", "UsernameOREmail":"abcd", "Password":"abcd1234"}
+						var userRegisterRequest userRequests.UserLoginRequest
+						if err := json.Unmarshal(message, &userRegisterRequest); err != nil {
+
+							response = base.NewFailResponse(-104, baseMessageObj.Tag, nil)
+							break
+						}
+
+						token, err := userModels.Login(session, userRegisterRequest);
+						if err != nil {
+							response = base.NewFailResponse(-105, baseMessageObj.Tag, nil)
+							break;
+						}
+
+						response = base.NewSuccessResponse(baseMessageObj.Tag, map[string]interface{}{"token": token})
+
+					default:
+						response = base.NewFailResponse(-3, baseMessageObj.Tag, nil)
+						break
+					}
+				default:
+					// Invalid resource type
+					response = base.NewFailResponse(-100, baseMessageObj.Tag, nil)
 					break
 				}
-
-				// Add BaseMessage reference
-				fileMessageObj.BaseMessage = baseMessageObj
-
-				// TODO: Do something.
-
-				// Notify success; return new version number.
-				response = base.NewSuccessResponse(baseMessageObj.Tag, nil)
-
-				// Notify all connected clients
-				// TODO: Change to use RabbitMQ or Redis
-				notification := fileMessageObj.GetNotification()
-				for i := range webSockets {
-					sendWebSocketMessage(webSockets[i], websocket.TextMessage, notification)
-				}
-
-			default:
-				// Invalid resource type
-				response = base.NewFailResponse(-100, baseMessageObj.Tag, nil)
-				break
 			}
 		}
 
@@ -131,9 +183,26 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 
+	var err error;
+
+	session, err = mgo.Dial("localhost/CodeCollaborate")
+	if err != nil {
+		log.Fatalf("CreateSession: %s\n", err)
+	}
+	defer session.Close()
+
+	session.SetMode(mgo.Eventual, true)
+	log.Println("Connected to DB")
+
 	http.HandleFunc("/ws/", handleWSConn)
-	err := http.ListenAndServe(*addr, nil)
+	err = http.ListenAndServe(*addr, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
+
+	defer session.Close()
+}
+type Person struct {
+	Name  string
+	Phone string
 }
