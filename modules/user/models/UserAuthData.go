@@ -8,7 +8,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"time"
 	"github.com/CodeCollaborate/CodeCollaborate/modules/base"
-	"strings"
+	"github.com/CodeCollaborate/CodeCollaborate/managers"
 )
 
 type UserAuthData struct {
@@ -18,14 +18,14 @@ type UserAuthData struct {
 	Tokens        []string // Token after logged in.
 }
 
-func Register(session *mgo.Session, registrationRequest userRequests.UserRegisterRequest) error {
+func Register(registrationRequest userRequests.UserRegisterRequest) base.WSResponse {
 
 	// Hash password using bcrypt
 	pwHashBytes, err := bcrypt.GenerateFromPassword([]byte(registrationRequest.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Failed to hash password")
-		log.Println(err)
-		return err;
+
+		return base.NewFailResponse(-102, registrationRequest.BaseMessage.Tag, nil)
 	}
 
 	// Create new UserAuthData object
@@ -35,11 +35,8 @@ func Register(session *mgo.Session, registrationRequest userRequests.UserRegiste
 	userAuthData.Password_Hash = string(pwHashBytes[:])
 
 	// Get new DB connection
-	copySession := session.Copy()
-	defer copySession.Close()
-
-	// Get collection
-	collection := copySession.DB("").C("Users")
+	session, collection := managers.GetMGoCollection("Users")
+	defer session.Close()
 
 	// Make sure index is unique
 	index := mgo.Index{
@@ -51,47 +48,43 @@ func Register(session *mgo.Session, registrationRequest userRequests.UserRegiste
 	}
 	err = collection.EnsureIndex(index);
 	if err != nil {
-		log.Println("Failed to create index in Users collection")
 		log.Println(err)
-		return err
+		return base.NewFailResponse(-102, registrationRequest.BaseMessage.Tag, nil)
 	}
 
 	// Register new user
 	err = collection.Insert(userAuthData)
 	if err != nil {
 		if !mgo.IsDup(err) {
-			log.Println("Failed to register User entry")
 			log.Println(err)
+			return base.NewFailResponse(-103, registrationRequest.BaseMessage.Tag, nil)
 		}
-		return err
+		return base.NewFailResponse(-102, registrationRequest.BaseMessage.Tag, nil)
 	}
 
-	return nil
+	return base.NewSuccessResponse(registrationRequest.BaseMessage.Tag, nil)
 }
 
-func Login(session *mgo.Session, loginRequest userRequests.UserLoginRequest) (string, error) {
+func Login(loginRequest userRequests.UserLoginRequest) base.WSResponse {
 
 	// Get new DB connection
-	copySession := session.Copy()
-	defer copySession.Close()
-
-	// Get collection
-	collection := copySession.DB("").C("Users")
+	session, collection := managers.GetMGoCollection("Users")
+	defer session.Close()
 
 	userAuthData := UserAuthData{}
 	if err := collection.Find(bson.M{"$or": []interface{}{bson.M{"username": loginRequest.UsernameOREmail}, bson.M{"email": loginRequest.UsernameOREmail}}}).One(&userAuthData); err != nil {
-		return "", err
+		return base.NewFailResponse(-105, loginRequest.BaseMessage.Tag, nil)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(userAuthData.Password_Hash), []byte(loginRequest.Password)); err != nil {
-		return "", err
+		return base.NewFailResponse(-105, loginRequest.BaseMessage.Tag, nil)
 	}
 
 	tokenBytes, err := bcrypt.GenerateFromPassword([]byte(loginRequest.UsernameOREmail + time.Now().String()), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Failed to generate token")
 		log.Println(err)
-		return "", err;
+		return base.NewFailResponse(-104, loginRequest.BaseMessage.Tag, nil)
 	}
 
 	token := string(tokenBytes[:])
@@ -100,28 +93,25 @@ func Login(session *mgo.Session, loginRequest userRequests.UserLoginRequest) (st
 	if err != nil {
 		log.Println("Failed to save token")
 		log.Println(err)
-		return "", err;
+		return base.NewFailResponse(-104, loginRequest.BaseMessage.Tag, nil)
 	}
 
-	return token, nil
+	return base.NewSuccessResponse(loginRequest.BaseMessage.Tag, map[string]interface{}{"token":token})
 }
 
-func CheckAuth(session *mgo.Session, baseRequest base.BaseRequest) bool {
+func CheckAuth(baseRequest base.BaseRequest) bool {
 
 	// Get new DB connection
-	copySession := session.Copy()
-	defer copySession.Close()
-
-	// Get collection
-	collection := copySession.DB("").C("Users")
+	session, collection := managers.GetMGoCollection("Users")
+	defer session.Close()
 
 	userAuthData := UserAuthData{}
-	if err := collection.Find(bson.M{"$or": []interface{}{bson.M{"username": baseRequest.Username}, bson.M{"email": baseRequest.Username}}}).One(&userAuthData); err != nil {
+	if err := collection.Find(bson.M{"username": baseRequest.Username}).One(&userAuthData); err != nil {
 		return false
 	}
 
 	for _, token := range userAuthData.Tokens {
-		if (strings.Compare(token, baseRequest.Token) == 0) {
+		if (token == baseRequest.Token) {
 			return true
 		}
 	}

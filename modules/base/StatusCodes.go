@@ -5,17 +5,15 @@ var StatusCodes = map[int]string{
 
 	// 0s - General Errors
 	-0:"Undefined Error",
-	-1:"Error deserializing JSON to BaseRequest",
+	-1:"Invalid JSON Object",
 	-2:"Invalid resource type",
 	-3:"Invalid action",
 
 	// 100s - User Errors
-	-100:"Error deserializing JSON to UserRequest",
-	-101:"Error deserializing JSON to UserRegisterRequest",
 	-102:"Error creating user: Internal Error",
 	-103:"Error creating user: Duplicate username",
-	-104:"Error deserializing JSON to UserLoginRequest",
-	-105:"Invalid Username or Password",
+	-104:"Error logging in: Internal Error",
+	-105:"Error logging in: Invalid Username or Password",
 	-106:"Invalid Token",
 
 	// 200s - Project Errors
