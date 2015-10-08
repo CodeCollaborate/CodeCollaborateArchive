@@ -37,7 +37,7 @@ type BaseRequest struct {
 	Action   string // Add, Update, Remove
 	Resource string // Project vs file
 	ResId    string // Id of resource
-	Username string // Token
+	UserId   string // UserId
 	Token    string // Token
 }
 

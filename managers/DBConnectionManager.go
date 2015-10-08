@@ -63,3 +63,7 @@ func LogError(err error){
 
 	collection.Insert(bson.M{"error": err.Error(), "timestamp": time.Now().UTC().String()})
 }
+
+func NewObjectIdString() string{
+	return bson.NewObjectId().Hex()
+}
