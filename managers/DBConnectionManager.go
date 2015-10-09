@@ -19,7 +19,8 @@ func ConnectMGo() error {
 		return err
 	}
 
-	dbSession.SetMode(mgo.Eventual, true)
+	dbSession.SetMode(mgo.Strong, true)
+//	dbSession.SetMode(mgo.Eventual, true)
 	log.Println("Connected to DB")
 
 	return nil
@@ -40,7 +41,7 @@ func GetNewMGoSession() *mgo.Session {
 	REMEMBER TO CLOSE THIS RESOURCE CONNECTION WHEN FINISHED.
  */
 func GetMGoDatabase(dbName string) (*mgo.Session, *mgo.Database) {
-	copySession := dbSession.Copy()
+	copySession := GetNewMGoSession()
 
 	// Get collection
 	return copySession, copySession.DB(dbName)
@@ -50,11 +51,9 @@ func GetMGoDatabase(dbName string) (*mgo.Session, *mgo.Database) {
 	REMEMBER TO CLOSE THIS RESOURCE CONNECTION WHEN FINISHED.
  */
 func GetMGoCollection(collectionName string) (*mgo.Session, *mgo.Collection) {
-	copySession := dbSession.Copy()
-
 	// Get collection
-	database := copySession.DB("").C(collectionName)
-	return copySession, database
+	session, database := GetMGoDatabase("")
+	return session, database.C(collectionName)
 }
 
 func LogError(err error){
