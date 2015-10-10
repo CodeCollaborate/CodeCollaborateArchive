@@ -11,19 +11,17 @@ const DB_HOST string = "localhost"
 const DB_PORT string = "27017"
 const DB_NAME string = "CodeCollaborate"
 
-func ConnectMGo() error {
+func ConnectMGo() {
 
 	var err error
 	dbSession, err = mgo.Dial(DB_HOST + ":" + DB_PORT + "/" + DB_NAME)
 	if err != nil {
-		return err
+		log.Println("Error connecting to MongoDB instance:", err)
 	}
 
 	dbSession.SetMode(mgo.Strong, true)
-//	dbSession.SetMode(mgo.Eventual, true)
+	//	dbSession.SetMode(mgo.Eventual, true)
 	log.Println("Connected to DB")
-
-	return nil
 }
 
 func GetPrimaryMGoSession() *mgo.Session {
@@ -56,13 +54,13 @@ func GetMGoCollection(collectionName string) (*mgo.Session, *mgo.Collection) {
 	return session, database.C(collectionName)
 }
 
-func LogError(err error){
+func LogError(err error) {
 	session, collection := GetMGoCollection("errors")
 	defer session.Close()
 
 	collection.Insert(bson.M{"error": err.Error(), "timestamp": time.Now().UTC().String()})
 }
 
-func NewObjectIdString() string{
+func NewObjectIdString() string {
 	return bson.NewObjectId().Hex()
 }

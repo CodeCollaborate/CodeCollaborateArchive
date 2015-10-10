@@ -16,6 +16,7 @@ import (
 	"github.com/CodeCollaborate/CodeCollaborate/modules/user/models"
 	"github.com/CodeCollaborate/CodeCollaborate/modules/user/requests"
 	"github.com/gorilla/websocket"
+	"os"
 )
 
 var addr = flag.String("addr", ":80", "http service address")
@@ -265,12 +266,18 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 
+	pwd, err := os.Getwd()
+	if err != nil {
+		log.Fatal("Could not get Working Directory: ", err)
+	}
+	log.Println("Running in directory:", pwd)
+
 	managers.ConnectMGo()
 	defer managers.GetPrimaryMGoSession().Close()
 
 	http.HandleFunc("/ws/", handleWSConn)
 	http.HandleFunc("/", handleHTTPConn)
-	err := http.ListenAndServe(*addr, nil)
+	err = http.ListenAndServe(*addr, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
