@@ -141,6 +141,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 					switch baseMessageObj.Action {
 
 					case "Create":
+						// {"Resource":"File", "Action":"Create", "UserId":"5615d78f4357413454000001", "Token": "$2a$10$FriLlb6m9GyxqxURN9YJj.8CmkefQF/uM454fSZY4LwazY.0X/nr2", "Name":"foo", "RelativePath":"test/path1/", "ProjectId":"5615d977435741340c000001"}
 						// Deserialize from JSON
 						var fileCreateRequest fileRequests.FileCreateRequest
 						if err := json.Unmarshal(message, &fileCreateRequest); err != nil {
@@ -152,6 +153,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						response = fileModels.CreateFile(fileCreateRequest)
 
 					case "Rename":
+						// {"Resource":"File", "Action":"Rename", "UserId":"5615d78f4357413454000001", "Token": "$2a$10$FriLlb6m9GyxqxURN9YJj.8CmkefQF/uM454fSZY4LwazY.0X/nr2", "NewFileName":"foo2", "FileId":"561978c14357412bf8000001"}
 						// Deserialize from JSON
 						var fileRenameRequest fileRequests.FileRenameRequest
 						if err := json.Unmarshal(message, &fileRenameRequest); err != nil {
@@ -163,6 +165,8 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						response = fileModels.RenameFile(fileRenameRequest)
 
 					case "Move":
+						// {"Resource":"File", "Action":"Move", "UserId":"5615d78f4357413454000001", "Token": "$2a$10$FriLlb6m9GyxqxURN9YJj.8CmkefQF/uM454fSZY4LwazY.0X/nr2", "NewPath":"test/path2/", "FileId":"561978c14357412bf8000001"}
+						// Deserialize from JSON
 						var fileMoveRequest fileRequests.FileMoveRequest
 						if err := json.Unmarshal(message, &fileMoveRequest); err != nil {
 							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
@@ -173,6 +177,8 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						response = fileModels.MoveFile(fileMoveRequest)
 
 					case "Delete":
+						// {"Resource":"File", "Action":"Delete", "UserId":"5615d78f4357413454000001", "Token": "$2a$10$FriLlb6m9GyxqxURN9YJj.8CmkefQF/uM454fSZY4LwazY.0X/nr2", "FileId":"561978c14357412bf8000001"}
+						// Deserialize from JSON
 						var fileDeleteRequest fileRequests.FileDeleteRequest
 						if err := json.Unmarshal(message, &fileDeleteRequest); err != nil {
 							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
