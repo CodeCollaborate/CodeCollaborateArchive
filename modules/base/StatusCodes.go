@@ -31,6 +31,7 @@ var StatusCodes = map[int]string{
 	-302: "Error renaming File: Internal Error",
 	-303: "Error moving File: Internal Error",
 	-304: "Error deleting File: Internal Error",
+	-305: "Error creating File: Duplicate File",
 
 	// 400s - Change Errors
 	-400: "Error deserializing JSON to FileChangeRequest",

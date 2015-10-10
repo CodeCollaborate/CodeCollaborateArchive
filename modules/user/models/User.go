@@ -1,23 +1,24 @@
 package userModels
 
 import (
-	"golang.org/x/crypto/bcrypt"
 	"log"
-	"gopkg.in/mgo.v2"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/user/requests"
-	"gopkg.in/mgo.v2/bson"
 	"time"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/base"
+
 	"github.com/CodeCollaborate/CodeCollaborate/managers"
+	"github.com/CodeCollaborate/CodeCollaborate/modules/base"
+	"github.com/CodeCollaborate/CodeCollaborate/modules/user/requests"
+	"golang.org/x/crypto/bcrypt"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type User struct {
-	Id            string  `bson:"_id"` // ID of object
-	Username      string               // Username
-	Email         string               // Email of user
-	Password      string  `json:"-"`   // Unhashed Password
-	Password_Hash string  `json:"-"`   // Hashed Password
-	Tokens        []string  `json:"-"` // Token after logged in.
+	Id            string   `bson:"_id"` // ID of object
+	Username      string   // Username
+	Email         string   // Email of user
+	Password      string   `json:"-"` // Unhashed Password
+	Password_Hash string   `json:"-"` // Hashed Password
+	Tokens        []string `json:"-"` // Token after logged in.
 }
 
 func RegisterUser(registrationRequest userRequests.UserRegisterRequest) base.WSResponse {
@@ -40,15 +41,15 @@ func RegisterUser(registrationRequest userRequests.UserRegisterRequest) base.WSR
 	session, collection := managers.GetMGoCollection("Users")
 	defer session.Close()
 
-	// Make sure index is unique
+	// Make sure username is unique
 	index := mgo.Index{
-		Key: []string{"username"},
-		Unique:true,
-		DropDups:true,
-		Background:true,
-		Sparse:true,
+		Key:        []string{"username"},
+		Unique:     true,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
 	}
-	err = collection.EnsureIndex(index);
+	err = collection.EnsureIndex(index)
 	if err != nil {
 		log.Println("Failed to ensure username index:", err)
 		return base.NewFailResponse(-101, registrationRequest.BaseMessage.Tag, nil)
@@ -57,11 +58,11 @@ func RegisterUser(registrationRequest userRequests.UserRegisterRequest) base.WSR
 	// Register new user
 	err = collection.Insert(userAuthData)
 	if err != nil {
-		if !mgo.IsDup(err) {
+		// Duplicate entry
+		if mgo.IsDup(err) {
 			log.Println("Error registering user:", err)
 			return base.NewFailResponse(-101, registrationRequest.BaseMessage.Tag, nil)
 		}
-		// Duplicate entry
 		return base.NewFailResponse(-102, registrationRequest.BaseMessage.Tag, nil)
 	}
 
@@ -85,7 +86,7 @@ func LoginUser(loginRequest userRequests.UserLoginRequest) base.WSResponse {
 		return base.NewFailResponse(-104, loginRequest.BaseMessage.Tag, nil)
 	}
 
-	tokenBytes, err := bcrypt.GenerateFromPassword([]byte(loginRequest.UsernameOREmail + time.Now().String()), bcrypt.DefaultCost)
+	tokenBytes, err := bcrypt.GenerateFromPassword([]byte(loginRequest.UsernameOREmail+time.Now().String()), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Failed to generate token:", err)
 		return base.NewFailResponse(-103, loginRequest.BaseMessage.Tag, nil)
@@ -99,7 +100,7 @@ func LoginUser(loginRequest userRequests.UserLoginRequest) base.WSResponse {
 		return base.NewFailResponse(-103, loginRequest.BaseMessage.Tag, nil)
 	}
 
-	return base.NewSuccessResponse(loginRequest.BaseMessage.Tag, map[string]interface{}{"UserId": user.Id, "Token":token})
+	return base.NewSuccessResponse(loginRequest.BaseMessage.Tag, map[string]interface{}{"UserId": user.Id, "Token": token})
 }
 
 func CheckUserAuth(baseRequest base.BaseRequest) bool {
@@ -115,7 +116,7 @@ func CheckUserAuth(baseRequest base.BaseRequest) bool {
 	}
 
 	for _, token := range userAuthData.Tokens {
-		if (token == baseRequest.Token) {
+		if token == baseRequest.Token {
 			// Found matching token
 			return true
 		}

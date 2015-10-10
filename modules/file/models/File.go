@@ -1,9 +1,12 @@
 package fileModels
 
 import (
+	"log"
+
 	"github.com/CodeCollaborate/CodeCollaborate/managers"
 	"github.com/CodeCollaborate/CodeCollaborate/modules/base"
 	"github.com/CodeCollaborate/CodeCollaborate/modules/file/requests"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -27,8 +30,25 @@ func CreateFile(fileCreateRequest fileRequests.FileCreateRequest) base.WSRespons
 	session, collection := managers.GetMGoCollection("Files")
 	defer session.Close()
 
-	err := collection.Insert(file)
+	index := mgo.Index{
+		Key:        []string{"name", "relative_path"},
+		Unique:     true,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
+	}
+	err := collection.EnsureIndex(index)
 	if err != nil {
+		log.Println("Failed to ensure username index:", err)
+		return base.NewFailResponse(-301, fileCreateRequest.BaseMessage.Tag, nil)
+	}
+
+	err = collection.Insert(file)
+	if err != nil {
+		if mgo.IsDup(err) {
+			log.Println("Error registering user:", err)
+			return base.NewFailResponse(-305, fileCreateRequest.BaseMessage.Tag, nil)
+		}
 		return base.NewFailResponse(-301, fileCreateRequest.BaseMessage.Tag, nil)
 	}
 
