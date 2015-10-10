@@ -5,7 +5,7 @@ import (
 )
 
 type ProjectCreateRequest struct {
-	BaseMessage base.BaseRequest  // BaseMessage for Tag, Resource and Method
+	BaseRequest base.BaseRequest  // BaseMessage for Tag, Resource and Method
 	Name        string            // Project name
 }
 

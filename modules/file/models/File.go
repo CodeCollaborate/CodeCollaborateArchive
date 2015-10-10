@@ -40,19 +40,19 @@ func CreateFile(fileCreateRequest fileRequests.FileCreateRequest) base.WSRespons
 	err := collection.EnsureIndex(index)
 	if err != nil {
 		log.Println("Failed to ensure username index:", err)
-		return base.NewFailResponse(-301, fileCreateRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil)
 	}
 
 	err = collection.Insert(file)
 	if err != nil {
 		if mgo.IsDup(err) {
 			log.Println("Error registering user:", err)
-			return base.NewFailResponse(-305, fileCreateRequest.BaseMessage.Tag, nil)
+			return base.NewFailResponse(-305, fileCreateRequest.BaseRequest.Tag, nil)
 		}
-		return base.NewFailResponse(-301, fileCreateRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil)
 	}
 
-	return base.NewSuccessResponse(fileCreateRequest.BaseMessage.Tag, map[string]interface{}{"FileId": file.Id})
+	return base.NewSuccessResponse(fileCreateRequest.BaseRequest.Tag, map[string]interface{}{"FileId": file.Id})
 
 }
 
@@ -60,34 +60,42 @@ func RenameFile(fileRenameRequest fileRequests.FileRenameRequest) base.WSRespons
 	session, collection := managers.GetMGoCollection("Files")
 	defer session.Close()
 
-	err := collection.Update(bson.M{"_id": fileRenameRequest.FileId}, bson.M{"$set": bson.M{"name": fileRenameRequest.NewFileName}})
+	// Check that file exists
+	// Check that new path/file does not exist - or check if it becomes a duplicate?
+
+	err := collection.Update(bson.M{"_id": fileRenameRequest.BaseRequest.ResId}, bson.M{"$set": bson.M{"name": fileRenameRequest.NewFileName}})
 	if err != nil {
-		return base.NewFailResponse(-302, fileRenameRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-302, fileRenameRequest.BaseRequest.Tag, nil)
 	}
 
-	return base.NewSuccessResponse(fileRenameRequest.BaseMessage.Tag, nil)
+	return base.NewSuccessResponse(fileRenameRequest.BaseRequest.Tag, nil)
 }
 
 func MoveFile(fileMoveRequest fileRequests.FileMoveRequest) base.WSResponse {
 	session, collection := managers.GetMGoCollection("Files")
 	defer session.Close()
 
-	err := collection.Update(bson.M{"_id": fileMoveRequest.FileId}, bson.M{"$set": bson.M{"relative_path": fileMoveRequest.NewPath}})
+	// Check that file exists
+	// Check that new path/file does not exist - or check if it becomes a duplicate?
+
+	err := collection.Update(bson.M{"_id": fileMoveRequest.BaseRequest.ResId}, bson.M{"$set": bson.M{"relative_path": fileMoveRequest.NewPath}})
 	if err != nil {
-		return base.NewFailResponse(-303, fileMoveRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-303, fileMoveRequest.BaseRequest.Tag, nil)
 	}
 
-	return base.NewSuccessResponse(fileMoveRequest.BaseMessage.Tag, nil)
+	return base.NewSuccessResponse(fileMoveRequest.BaseRequest.Tag, nil)
 }
 
 func DeleteFile(fileDeleteRequest fileRequests.FileDeleteRequest) base.WSResponse {
 	session, collection := managers.GetMGoCollection("Files")
 	defer session.Close()
 
-	err := collection.Remove(bson.M{"_id": fileDeleteRequest.FileId})
+	// Check that file exists
+
+	err := collection.Remove(bson.M{"_id": fileDeleteRequest.BaseRequest.ResId})
 	if err != nil {
-		return base.NewFailResponse(-304, fileDeleteRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-304, fileDeleteRequest.BaseRequest.Tag, nil)
 	}
 
-	return base.NewSuccessResponse(fileDeleteRequest.BaseMessage.Tag, nil)
+	return base.NewSuccessResponse(fileDeleteRequest.BaseRequest.Tag, nil)
 }

@@ -5,8 +5,7 @@ import (
 )
 
 type ProjectRevokePermissionsRequest struct {
-	BaseMessage  base.BaseRequest // BaseMessage for Tag, Resource and Method
-	ProjectId    string           // Project Id
+	BaseRequest base.BaseRequest // BaseMessage for Tag, Resource and Method
 	RevokeUserId string           // User id
 }
 

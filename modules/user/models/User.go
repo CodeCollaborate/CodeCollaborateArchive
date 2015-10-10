@@ -27,7 +27,7 @@ func RegisterUser(registrationRequest userRequests.UserRegisterRequest) base.WSR
 	pwHashBytes, err := bcrypt.GenerateFromPassword([]byte(registrationRequest.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Failed to hash password:", err)
-		return base.NewFailResponse(-101, registrationRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil)
 	}
 
 	// Create new UserAuthData object
@@ -52,7 +52,7 @@ func RegisterUser(registrationRequest userRequests.UserRegisterRequest) base.WSR
 	err = collection.EnsureIndex(index)
 	if err != nil {
 		log.Println("Failed to ensure username index:", err)
-		return base.NewFailResponse(-101, registrationRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil)
 	}
 
 	// Register new user
@@ -61,12 +61,12 @@ func RegisterUser(registrationRequest userRequests.UserRegisterRequest) base.WSR
 		// Duplicate entry
 		if mgo.IsDup(err) {
 			log.Println("Error registering user:", err)
-			return base.NewFailResponse(-101, registrationRequest.BaseMessage.Tag, nil)
+			return base.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil)
 		}
-		return base.NewFailResponse(-102, registrationRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-102, registrationRequest.BaseRequest.Tag, nil)
 	}
 
-	return base.NewSuccessResponse(registrationRequest.BaseMessage.Tag, nil)
+	return base.NewSuccessResponse(registrationRequest.BaseRequest.Tag, nil)
 }
 
 func LoginUser(loginRequest userRequests.UserLoginRequest) base.WSResponse {
@@ -78,18 +78,18 @@ func LoginUser(loginRequest userRequests.UserLoginRequest) base.WSResponse {
 	user := User{}
 	if err := collection.Find(bson.M{"$or": []interface{}{bson.M{"username": loginRequest.UsernameOREmail}, bson.M{"email": loginRequest.UsernameOREmail}}}).One(&user); err != nil {
 		// Could not find user
-		return base.NewFailResponse(-104, loginRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-104, loginRequest.BaseRequest.Tag, nil)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password_Hash), []byte(loginRequest.Password)); err != nil {
 		// Password did not match.
-		return base.NewFailResponse(-104, loginRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-104, loginRequest.BaseRequest.Tag, nil)
 	}
 
 	tokenBytes, err := bcrypt.GenerateFromPassword([]byte(loginRequest.UsernameOREmail+time.Now().String()), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Failed to generate token:", err)
-		return base.NewFailResponse(-103, loginRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-103, loginRequest.BaseRequest.Tag, nil)
 	}
 
 	token := string(tokenBytes[:])
@@ -97,10 +97,10 @@ func LoginUser(loginRequest userRequests.UserLoginRequest) base.WSResponse {
 	err = addToken(collection, user, token)
 	if err != nil {
 		log.Println("Failed to save token:", err)
-		return base.NewFailResponse(-103, loginRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-103, loginRequest.BaseRequest.Tag, nil)
 	}
 
-	return base.NewSuccessResponse(loginRequest.BaseMessage.Tag, map[string]interface{}{"UserId": user.Id, "Token": token})
+	return base.NewSuccessResponse(loginRequest.BaseRequest.Tag, map[string]interface{}{"UserId": user.Id, "Token": token})
 }
 
 func CheckUserAuth(baseRequest base.BaseRequest) bool {

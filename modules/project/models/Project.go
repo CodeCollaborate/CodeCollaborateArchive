@@ -37,7 +37,7 @@ func CreateProject(projectCreateRequest projectRequests.ProjectCreateRequest) ba
 	project.Id = managers.NewObjectIdString()
 	project.Name = projectCreateRequest.Name
 	project.ServerPath = project.Id
-	project.Permissions = map[string]int{projectCreateRequest.BaseMessage.UserId: 10} // Set creator to owner permissions
+	project.Permissions = map[string]int{projectCreateRequest.BaseRequest.UserId: 10} // Set creator to owner permissions
 
 	// Get new DB connection
 	session, collection := managers.GetMGoCollection("Projects")
@@ -46,10 +46,10 @@ func CreateProject(projectCreateRequest projectRequests.ProjectCreateRequest) ba
 	// Create the project
 	err := collection.Insert(project)
 	if err != nil {
-		return base.NewFailResponse(-201, projectCreateRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-201, projectCreateRequest.BaseRequest.Tag, nil)
 	}
 
-	return base.NewSuccessResponse(projectCreateRequest.BaseMessage.Tag, map[string]interface{}{"ProjectId": project.Id})
+	return base.NewSuccessResponse(projectCreateRequest.BaseRequest.Tag, map[string]interface{}{"ProjectId": project.Id})
 }
 
 // Rename project (?)
@@ -60,12 +60,12 @@ func RenameProject(projectRenameRequest projectRequests.ProjectRenameRequest) ba
 	defer session.Close()
 
 	// Rename the project
-	err := collection.Update(bson.M{"_id": projectRenameRequest.ProjectId}, bson.M{"$set": bson.M{"name": projectRenameRequest.NewName}})
+	err := collection.Update(bson.M{"_id": projectRenameRequest.BaseRequest.ResId}, bson.M{"$set": bson.M{"name": projectRenameRequest.NewName}})
 	if err != nil {
-		return base.NewFailResponse(-202, projectRenameRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-202, projectRenameRequest.BaseRequest.Tag, nil)
 	}
 
-	return base.NewSuccessResponse(projectRenameRequest.BaseMessage.Tag, nil)
+	return base.NewSuccessResponse(projectRenameRequest.BaseRequest.Tag, nil)
 }
 
 // Delete project (?)
@@ -75,9 +75,9 @@ func RenameProject(projectRenameRequest projectRequests.ProjectRenameRequest) ba
 //  - Grants permission level to user, overwriting if necessary.
 func GrantProjectPermissions(projectGrantPermissionsRequest projectRequests.ProjectGrantPermissionsRequest) base.WSResponse {
 
-	project, err := GetProjectById(projectGrantPermissionsRequest.ProjectId)
+	project, err := GetProjectById(projectGrantPermissionsRequest.BaseRequest.ResId)
 	if err != nil {
-		return base.NewFailResponse(-200, projectGrantPermissionsRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-200, projectGrantPermissionsRequest.BaseRequest.Tag, nil)
 	}
 	project.Permissions[projectGrantPermissionsRequest.GrantUserId] = projectGrantPermissionsRequest.PermissionLevel
 
@@ -86,12 +86,12 @@ func GrantProjectPermissions(projectGrantPermissionsRequest projectRequests.Proj
 	defer session.Close()
 
 	// Create the project
-	err = collection.Update(bson.M{"_id": projectGrantPermissionsRequest.ProjectId}, bson.M{"$set": bson.M{"permissions": project.Permissions}})
+	err = collection.Update(bson.M{"_id": projectGrantPermissionsRequest.BaseRequest.ResId}, bson.M{"$set": bson.M{"permissions": project.Permissions}})
 	if err != nil {
-		return base.NewFailResponse(-202, projectGrantPermissionsRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-202, projectGrantPermissionsRequest.BaseRequest.Tag, nil)
 	}
 
-	return base.NewSuccessResponse(projectGrantPermissionsRequest.BaseMessage.Tag, nil)
+	return base.NewSuccessResponse(projectGrantPermissionsRequest.BaseRequest.Tag, nil)
 }
 
 // Revoke permission for <User>
@@ -99,9 +99,9 @@ func GrantProjectPermissions(projectGrantPermissionsRequest projectRequests.Proj
 //  - Revokes permissions entirely; removes entry.
 func RevokeProjectPermissions(projectRevokePermissionsRequest projectRequests.ProjectRevokePermissionsRequest) base.WSResponse {
 
-	project, err := GetProjectById(projectRevokePermissionsRequest.ProjectId)
+	project, err := GetProjectById(projectRevokePermissionsRequest.BaseRequest.ResId)
 	if err != nil {
-		return base.NewFailResponse(-200, projectRevokePermissionsRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-200, projectRevokePermissionsRequest.BaseRequest.Tag, nil)
 	}
 
 	// Make sure that there is still an owner of the project.
@@ -112,7 +112,7 @@ func RevokeProjectPermissions(projectRevokePermissionsRequest projectRequests.Pr
 		}
 	}
 	if owner == "" {
-		return base.NewFailResponse(-205, projectRevokePermissionsRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-205, projectRevokePermissionsRequest.BaseRequest.Tag, nil)
 	}
 
 	delete(project.Permissions, projectRevokePermissionsRequest.RevokeUserId)
@@ -122,12 +122,12 @@ func RevokeProjectPermissions(projectRevokePermissionsRequest projectRequests.Pr
 	defer session.Close()
 
 	// Create the project
-	err = collection.Update(bson.M{"_id": projectRevokePermissionsRequest.ProjectId}, bson.M{"$set": bson.M{"permissions": project.Permissions}})
+	err = collection.Update(bson.M{"_id": projectRevokePermissionsRequest.BaseRequest.ResId}, bson.M{"$set": bson.M{"permissions": project.Permissions}})
 	if err != nil {
-		return base.NewFailResponse(-202, projectRevokePermissionsRequest.BaseMessage.Tag, nil)
+		return base.NewFailResponse(-202, projectRevokePermissionsRequest.BaseRequest.Tag, nil)
 	}
 
-	return base.NewSuccessResponse(projectRevokePermissionsRequest.BaseMessage.Tag, nil)
+	return base.NewSuccessResponse(projectRevokePermissionsRequest.BaseRequest.Tag, nil)
 }
 
 func GetProjectById(id string) (*Project, error) {

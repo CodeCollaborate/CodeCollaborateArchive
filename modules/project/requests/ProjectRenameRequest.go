@@ -5,8 +5,7 @@ import (
 )
 
 type ProjectRenameRequest struct {
-	BaseMessage base.BaseRequest // BaseMessage for Tag, Resource and Method
-	ProjectId   string           // Project Id
+	BaseRequest base.BaseRequest // BaseMessage for Tag, Resource and Method
 	NewName     string           // New Project Name
 }
 

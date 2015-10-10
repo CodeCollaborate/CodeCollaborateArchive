@@ -60,72 +60,72 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 		}
 
 		// Deserialize data from json.
-		var baseMessageObj base.BaseRequest
-		if err := json.Unmarshal(message, &baseMessageObj); err != nil {
+		var baseRequestObj base.BaseRequest
+		if err := json.Unmarshal(message, &baseRequestObj); err != nil {
 
-			response = base.NewFailResponse(-1, baseMessageObj.Tag, map[string]interface{}{"Error:": err})
+			response = base.NewFailResponse(-1, baseRequestObj.Tag, map[string]interface{}{"Error:": err})
 
 		} else {
-			if !(strings.Compare("User", baseMessageObj.Resource) == 0 && (strings.Compare("Register", baseMessageObj.Action) == 0 || strings.Compare("Login", baseMessageObj.Action) == 0)) && !userModels.CheckUserAuth(baseMessageObj) {
-				response = base.NewFailResponse(-105, baseMessageObj.Tag, nil)
+			if !(strings.Compare("User", baseRequestObj.Resource) == 0 && (strings.Compare("Register", baseRequestObj.Action) == 0 || strings.Compare("Login", baseRequestObj.Action) == 0)) && !userModels.CheckUserAuth(baseRequestObj) {
+				response = base.NewFailResponse(-105, baseRequestObj.Tag, nil)
 			} else {
 
-				switch baseMessageObj.Resource {
+				switch baseRequestObj.Resource {
 				case "Project":
-					switch baseMessageObj.Action {
+					switch baseRequestObj.Action {
 					case "Create":
 
-						// {"Resource":"Project", "Action":"Create", "UserId":"5615d78f4357413454000001", "Token": "$2a$10$FriLlb6m9GyxqxURN9YJj.8CmkefQF/uM454fSZY4LwazY.0X/nr2", "Name":"foo"}
+						// {"Resource":"Project", "Action":"Create", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "Name":"foo"}
 						// Deserialize from JSON
 						var projectCreateRequest projectRequests.ProjectCreateRequest
 						if err := json.Unmarshal(message, &projectCreateRequest); err != nil {
-							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
+							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
-						// Add BaseMessage reference
-						projectCreateRequest.BaseMessage = baseMessageObj
+						// Add BaseRequest reference
+						projectCreateRequest.BaseRequest = baseRequestObj
 						response = projectModels.CreateProject(projectCreateRequest)
 
 					case "Rename":
 
-						// {"Resource":"Project", "Action":"Rename", "UserId":"5615d78f4357413454000001", "Token": "$2a$10$FriLlb6m9GyxqxURN9YJj.8CmkefQF/uM454fSZY4LwazY.0X/nr2", "ProjectId": "5615d977435741340c000001", "NewName":"bar"}
+						// {"Resource":"Project", "Action":"Rename", "ResId": "561987174357413b14000002", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "NewName":"bar"}
 						// Deserialize from JSON
 						var projectRenameRequest projectRequests.ProjectRenameRequest
 						if err := json.Unmarshal(message, &projectRenameRequest); err != nil {
-							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
+							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
-						// Add BaseMessage reference
-						projectRenameRequest.BaseMessage = baseMessageObj
+						// Add BaseRequest reference
+						projectRenameRequest.BaseRequest = baseRequestObj
 						response = projectModels.RenameProject(projectRenameRequest)
 
 					case "GrantPermissions":
 
-						// {"Resource":"Project", "Action":"GrantPermissions", "UserId":"5615d78f4357413454000001", "Token": "$2a$10$FriLlb6m9GyxqxURN9YJj.8CmkefQF/uM454fSZY4LwazY.0X/nr2", "ProjectId": "5615d977435741340c000001", "GrantUserId":"5615ee9f4357410d10000001", "PermissionLevel":5}
+						// {"Resource":"Project", "Action":"GrantPermissions", "ResId": "561987174357413b14000002", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "GrantUserId":"561987434357413b14000003", "PermissionLevel":5}
 						// Deserialize from JSON
 						var projectGrantPermissionsRequest projectRequests.ProjectGrantPermissionsRequest
 						if err := json.Unmarshal(message, &projectGrantPermissionsRequest); err != nil {
 
-							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
+							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
-						// Add BaseMessage reference
-						projectGrantPermissionsRequest.BaseMessage = baseMessageObj
+						// Add BaseRequest reference
+						projectGrantPermissionsRequest.BaseRequest = baseRequestObj
 
 						response = projectModels.GrantProjectPermissions(projectGrantPermissionsRequest)
 
 					case "RevokePermissions":
 
-						// {"Resource":"Project", "Action":"RevokePermissions", "UserId":"5615d78f4357413454000001", "Token": "$2a$10$FriLlb6m9GyxqxURN9YJj.8CmkefQF/uM454fSZY4LwazY.0X/nr2", "ProjectId": "5615d977435741340c000001", "RevokeUserId":"5615ee9f4357410d10000001"}
+						// {"Resource":"Project", "Action":"RevokePermissions", "ResId": "561987174357413b14000002", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "RevokeUserId":"561987434357413b14000003"}
 						// Deserialize from JSON
 						var projectRevokePermissionsRequest projectRequests.ProjectRevokePermissionsRequest
 						if err := json.Unmarshal(message, &projectRevokePermissionsRequest); err != nil {
 
-							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
+							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
-						// Add BaseMessage reference
-						projectRevokePermissionsRequest.BaseMessage = baseMessageObj
+						// Add BaseRequest reference
+						projectRevokePermissionsRequest.BaseRequest = baseRequestObj
 
 						response = projectModels.RevokeProjectPermissions(projectRevokePermissionsRequest)
 
@@ -133,71 +133,71 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 					// TODO
 
 					default:
-						response = base.NewFailResponse(-3, baseMessageObj.Tag, nil)
+						response = base.NewFailResponse(-3, baseRequestObj.Tag, nil)
 						break
 					}
 				case "File":
 					// TODO: Do something.
-					switch baseMessageObj.Action {
+					switch baseRequestObj.Action {
 
 					case "Create":
-						// {"Resource":"File", "Action":"Create", "UserId":"5615d78f4357413454000001", "Token": "$2a$10$FriLlb6m9GyxqxURN9YJj.8CmkefQF/uM454fSZY4LwazY.0X/nr2", "Name":"foo", "RelativePath":"test/path1/", "ProjectId":"5615d977435741340c000001"}
+						// {"Resource":"File", "Action":"Create", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "Name":"foo", "RelativePath":"test/path1/", "ProjectId":"561987174357413b14000002"}
 						// Deserialize from JSON
 						var fileCreateRequest fileRequests.FileCreateRequest
 						if err := json.Unmarshal(message, &fileCreateRequest); err != nil {
-							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
+							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
-						// Add BaseMessage reference
-						fileCreateRequest.BaseMessage = baseMessageObj
+						// Add BaseRequest reference
+						fileCreateRequest.BaseRequest = baseRequestObj
 						response = fileModels.CreateFile(fileCreateRequest)
 
 					case "Rename":
-						// {"Resource":"File", "Action":"Rename", "UserId":"5615d78f4357413454000001", "Token": "$2a$10$FriLlb6m9GyxqxURN9YJj.8CmkefQF/uM454fSZY4LwazY.0X/nr2", "NewFileName":"foo2", "FileId":"561978c14357412bf8000001"}
+						// {"Resource":"File", "Action":"Rename", "ResId":"561987a84357413b14000006", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "NewFileName":"foo2"}
 						// Deserialize from JSON
 						var fileRenameRequest fileRequests.FileRenameRequest
 						if err := json.Unmarshal(message, &fileRenameRequest); err != nil {
-							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
+							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
-						// Add BaseMessage reference
-						fileRenameRequest.BaseMessage = baseMessageObj
+						// Add BaseRequest reference
+						fileRenameRequest.BaseRequest = baseRequestObj
 						response = fileModels.RenameFile(fileRenameRequest)
 
 					case "Move":
-						// {"Resource":"File", "Action":"Move", "UserId":"5615d78f4357413454000001", "Token": "$2a$10$FriLlb6m9GyxqxURN9YJj.8CmkefQF/uM454fSZY4LwazY.0X/nr2", "NewPath":"test/path2/", "FileId":"561978c14357412bf8000001"}
+						// {"Resource":"File", "Action":"Move", "ResId":"561987a84357413b14000006", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "NewPath":"test/path2/"}
 						// Deserialize from JSON
 						var fileMoveRequest fileRequests.FileMoveRequest
 						if err := json.Unmarshal(message, &fileMoveRequest); err != nil {
-							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
+							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
-						// Add BaseMessage reference
-						fileMoveRequest.BaseMessage = baseMessageObj
+						// Add BaseRequest reference
+						fileMoveRequest.BaseRequest = baseRequestObj
 						response = fileModels.MoveFile(fileMoveRequest)
 
 					case "Delete":
-						// {"Resource":"File", "Action":"Delete", "UserId":"5615d78f4357413454000001", "Token": "$2a$10$FriLlb6m9GyxqxURN9YJj.8CmkefQF/uM454fSZY4LwazY.0X/nr2", "FileId":"561978c14357412bf8000001"}
+						// {"Resource":"File", "Action":"Delete", "ResId":"561987a84357413b14000006", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e"}
 						// Deserialize from JSON
 						var fileDeleteRequest fileRequests.FileDeleteRequest
 						if err := json.Unmarshal(message, &fileDeleteRequest); err != nil {
-							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
+							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
-						// Add BaseMessage reference
-						fileDeleteRequest.BaseMessage = baseMessageObj
+						// Add BaseRequest reference
+						fileDeleteRequest.BaseRequest = baseRequestObj
 						response = fileModels.DeleteFile(fileDeleteRequest)
 
 					case "Change":
-						// eg: {"Tag": 112, "Action": "Update", "Resource": "File", "ResId": "511", "CommitHash": "4as5d4w5as", "Changes": "@@ -40,16 +40,17 @@\n almost i\n+t\n n shape", "UserId": "5615d78f4357413454000001", "Token": "$2a$10$FriLlb6m9GyxqxURN9YJj.8CmkefQF/uM454fSZY4LwazY.0X/nr2"}
+						// {"Tag": 112, "Action": "Change", "Resource": "File", "ResId": "561987a44357413b14000004", "FileVersion":0, "Changes": "@@ -40,16 +40,17 @@\n almost i\n+t\n n shape", "UserId": "561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e"}
 						// Deserialize from JSON
 						var fileChangeRequest fileRequests.FileChangeRequest
 						if err := json.Unmarshal(message, &fileChangeRequest); err != nil {
-							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
+							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
-						// Add BaseMessage reference
-						fileChangeRequest.BaseRequest = baseMessageObj
+						// Add BaseRequest reference
+						fileChangeRequest.BaseRequest = baseRequestObj
 
 						response = fileModels.InsertChange(fileChangeRequest)
 
@@ -209,15 +209,15 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// }
 
 					default:
-						response = base.NewFailResponse(-3, baseMessageObj.Tag, map[string]interface{}{"Action": baseMessageObj.Action})
+						response = base.NewFailResponse(-3, baseRequestObj.Tag, map[string]interface{}{"Action": baseRequestObj.Action})
 						break
 					}
 
 					// // Notify success; return new version number.
-					// response = base.NewSuccessResponse(baseMessageObj.Tag, nil)
+					// response = base.NewSuccessResponse(baseRequestObj.Tag, nil)
 
 				case "User":
-					switch baseMessageObj.Action {
+					switch baseRequestObj.Action {
 					case "Register":
 
 						// {"Resource":"User", "Action":"Register", "Username":"abcd", "Email":"abcd@efgh.edu", "Password":"abcd1234"}
@@ -225,11 +225,11 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						var userRegisterRequest userRequests.UserRegisterRequest
 						if err := json.Unmarshal(message, &userRegisterRequest); err != nil {
 
-							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
+							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
-						// Add BaseMessage reference
-						userRegisterRequest.BaseMessage = baseMessageObj
+						// Add BaseRequest reference
+						userRegisterRequest.BaseRequest = baseRequestObj
 
 						response = userModels.RegisterUser(userRegisterRequest)
 					case "Login":
@@ -239,24 +239,26 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						var userLoginRequest userRequests.UserLoginRequest
 						if err := json.Unmarshal(message, &userLoginRequest); err != nil {
 
-							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
+							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
-						// Add BaseMessage reference
-						userLoginRequest.BaseMessage = baseMessageObj
+						// Add BaseRequest reference
+						userLoginRequest.BaseRequest = baseRequestObj
 
 						//Check username/pw, login if needed.
 						response = userModels.LoginUser(userLoginRequest)
 
 						//TODO: maybe delete?
 
+						//TODO: Change PW
+
 					default:
-						response = base.NewFailResponse(-3, baseMessageObj.Tag, nil)
+						response = base.NewFailResponse(-3, baseRequestObj.Tag, nil)
 						break
 					}
 				default:
 					// Invalid resource type
-					response = base.NewFailResponse(-2, baseMessageObj.Tag, nil)
+					response = base.NewFailResponse(-2, baseRequestObj.Tag, nil)
 					break
 				}
 			}

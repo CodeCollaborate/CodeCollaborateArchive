@@ -5,7 +5,7 @@ import (
 )
 
 type UserLoginRequest struct {
-	BaseMessage base.BaseRequest  // BaseMessage for Tag, Resource and Method
+	BaseRequest base.BaseRequest  // BaseMessage for Tag, Resource and Method
 	UsernameOREmail string            // Username or Email, doesn't matter
 	Password string `bson:"-"` // Unhashed Password - WARNING: DO NOT SAVE OR PRINT.
 }
