@@ -3,17 +3,19 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
-	"github.com/gorilla/websocket"
+	"strings"
+
+	"github.com/CodeCollaborate/CodeCollaborate/managers"
 	"github.com/CodeCollaborate/CodeCollaborate/modules/base"
+	"github.com/CodeCollaborate/CodeCollaborate/modules/file/requests"
+	"github.com/CodeCollaborate/CodeCollaborate/modules/project/models"
+	"github.com/CodeCollaborate/CodeCollaborate/modules/project/requests"
 	"github.com/CodeCollaborate/CodeCollaborate/modules/user/models"
 	"github.com/CodeCollaborate/CodeCollaborate/modules/user/requests"
-	"strings"
-	"github.com/CodeCollaborate/CodeCollaborate/managers"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/file/requests"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/project/requests"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/project/models"
+	"github.com/gorilla/websocket"
 )
 
 var addr = flag.String("addr", ":80", "http service address")
@@ -48,7 +50,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 	for {
 		messageType, message, err := wsConn.ReadMessage()
-		var response base.WSResponse = base.NewFailResponse(-0, 0, nil)
+		var response = base.NewFailResponse(-0, 0, nil)
 		if err != nil {
 			log.Println("Error reading from WebSocket:", err)
 			break
@@ -58,7 +60,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 		var baseMessageObj base.BaseRequest
 		if err := json.Unmarshal(message, &baseMessageObj); err != nil {
 
-			response = base.NewFailResponse(-1, baseMessageObj.Tag, map[string]interface{}{"Error:":err})
+			response = base.NewFailResponse(-1, baseMessageObj.Tag, map[string]interface{}{"Error:": err})
 
 		} else {
 			if !(strings.Compare("User", baseMessageObj.Resource) == 0 && (strings.Compare("Register", baseMessageObj.Action) == 0 || strings.Compare("Login", baseMessageObj.Action) == 0)) && !userModels.CheckUserAuth(baseMessageObj) {
@@ -145,6 +147,18 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 					fileMessageObj.BaseMessage = baseMessageObj
 
 					// TODO: Do something.
+					switch fileMessageObj.BaseMessage.Action {
+					// NOTE: this could be wrong, based on line 147 this looks correct
+					case "Add":
+
+					case "Update":
+
+					case "Remove":
+
+					default:
+						response = base.NewFailResponse(-3, fileMessageObj.BaseMessage.Tag, map[string]interface{}{"Action": fileMessageObj.BaseMessage.Action})
+						break
+					}
 
 					// Notify success; return new version number.
 					response = base.NewSuccessResponse(baseMessageObj.Tag, nil)
@@ -185,7 +199,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						userLoginRequest.BaseMessage = baseMessageObj
 
 						//Check username/pw, login if needed.
-						response = userModels.LoginUser(userLoginRequest);
+						response = userModels.LoginUser(userLoginRequest)
 
 					default:
 						response = base.NewFailResponse(-3, baseMessageObj.Tag, nil)
@@ -208,10 +222,10 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 func socketDisconnected(conn *websocket.Conn) {
 	for p, v := range webSockets {
-		if (v == conn) {
-			copy(webSockets[p:], webSockets[p + 1:])
-			webSockets[len(webSockets) - 1] = nil // or the zero value of T
-			webSockets = webSockets[:len(webSockets) - 1]
+		if v == conn {
+			copy(webSockets[p:], webSockets[p+1:])
+			webSockets[len(webSockets)-1] = nil // or the zero value of T
+			webSockets = webSockets[:len(webSockets)-1]
 		}
 	}
 }
@@ -234,6 +248,19 @@ func sendWebSocketMessage(conn *websocket.Conn, messageType int, message interfa
 	return nil
 }
 
+func handleHTTPConn(responseWriter http.ResponseWriter, request *http.Request) {
+	if request.URL.Path != "/" {
+		http.Error(responseWriter, "Not found", 404)
+		return
+	}
+	if request.Method != "GET" {
+		http.Error(responseWriter, "Method not allowed", 405)
+		return
+	}
+	responseWriter.Header()
+	fmt.Fprintf(responseWriter, "hello there")
+}
+
 func main() {
 	flag.Parse()
 	log.SetFlags(0)
@@ -242,12 +269,9 @@ func main() {
 	defer managers.GetPrimaryMGoSession().Close()
 
 	http.HandleFunc("/ws/", handleWSConn)
+	http.HandleFunc("/", handleHTTPConn)
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
-}
-type Person struct {
-	Name  string
-	Phone string
 }
