@@ -197,16 +197,16 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 							break
 						}
 						// Add BaseMessage reference
-						fileChangeRequest.BaseMessage = baseMessageObj
+						fileChangeRequest.BaseRequest = baseMessageObj
 
-						//TODO: Do database somethings
+						response = fileModels.InsertChange(fileChangeRequest)
 
 						// Notify all connected clients
 						// TODO: Change to use RabbitMQ or Redis
-						notification := fileChangeRequest.GetNotification()
-						for _, WSConnection := range webSockets {
-							sendWebSocketMessage(WSConnection, websocket.TextMessage, notification)
-						}
+						// notification := fileChangeRequest.GetNotification()
+						// for _, WSConnection := range webSockets {
+						// 	sendWebSocketMessage(WSConnection, websocket.TextMessage, notification)
+						// }
 
 					default:
 						response = base.NewFailResponse(-3, baseMessageObj.Tag, map[string]interface{}{"Action": baseMessageObj.Action})

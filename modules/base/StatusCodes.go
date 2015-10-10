@@ -26,7 +26,6 @@ var StatusCodes = map[int]string{
 	-205: "Error revoking permissions: Must have an owner",
 
 	// 300s - File Errors
-	-300: "Error deserializing JSON to FileRequest",
 	-301: "Error creating File: Internal Error",
 	-302: "Error renaming File: Internal Error",
 	-303: "Error moving File: Internal Error",
@@ -34,6 +33,7 @@ var StatusCodes = map[int]string{
 	-305: "Error creating File: Duplicate File",
 
 	// 400s - Change Errors
-	-400: "Error deserializing JSON to FileChangeRequest",
+	-400: "Error inserting Change: Internal Error",
+	-401: "Error inserting Change: Duplicate Version Number",
 	// -420:"Error, too blazed"
 }
