@@ -1,40 +1,73 @@
 package fileModels
 
 import (
-	"github.com/CodeCollaborate/CodeCollaborate/modules/project/models"
-	"gopkg.in/mgo.v2"
+	"github.com/CodeCollaborate/CodeCollaborate/managers"
+	"github.com/CodeCollaborate/CodeCollaborate/modules/base"
+	"github.com/CodeCollaborate/CodeCollaborate/modules/file/requests"
 	"gopkg.in/mgo.v2/bson"
-	"log"
 )
 
 type File struct {
-	Id            string  `bson:"_id"`   // ID of object
-	Name          string                // Name of file
-	Relative_Path string                // Path of file
-	Version       int                   // File version
-	Project       projectModels.Project // Reference to Project object
+	Id           string `bson:"_id"` // ID of object
+	Name         string // Name of file
+	RelativePath string `bson:"relative_path"` // Path of file
+	Version      int    // File version
+	Project      string // Reference to Project object
 }
 
-func (file File) Save(session *mgo.Session) {
-	copySession := session.Copy()
-	defer copySession.Close()
+func CreateFile(fileCreateRequest fileRequests.FileCreateRequest) base.WSResponse {
 
-	collection := copySession.DB("").C("Files")
+	file := new(File)
+	file.Id = managers.NewObjectIdString()
+	file.Name = fileCreateRequest.Name
+	file.RelativePath = fileCreateRequest.RelativePath
+	file.Version = 0
+	file.Project = fileCreateRequest.ProjectId
+
+	session, collection := managers.GetMGoCollection("Files")
+	defer session.Close()
+
 	err := collection.Insert(file)
 	if err != nil {
-		log.Println(err)
+		return base.NewFailResponse(-301, fileCreateRequest.BaseMessage.Tag, nil)
 	}
+
+	return base.NewSuccessResponse(fileCreateRequest.BaseMessage.Tag, map[string]interface{}{"FileId": file.Id})
+
 }
 
-func GetFile(session *mgo.Session, id string) {
-	copySession := session.Copy()
-	defer copySession.Close()
+func RenameFile(fileRenameRequest fileRequests.FileRenameRequest) base.WSResponse {
+	session, collection := managers.GetMGoCollection("Files")
+	defer session.Close()
 
-	collection := copySession.DB("").C("Files")
-
-	result := File{}
-	err := collection.Find(bson.M{"_id": id}).One(&result)
+	err := collection.Update(bson.M{"_id": fileRenameRequest.FileId}, bson.M{"$set": bson.M{"name": fileRenameRequest.NewFileName}})
 	if err != nil {
-		log.Println(err)
+		return base.NewFailResponse(-302, fileRenameRequest.BaseMessage.Tag, nil)
 	}
+
+	return base.NewSuccessResponse(fileRenameRequest.BaseMessage.Tag, nil)
+}
+
+func MoveFile(fileMoveRequest fileRequests.FileMoveRequest) base.WSResponse {
+	session, collection := managers.GetMGoCollection("Files")
+	defer session.Close()
+
+	err := collection.Update(bson.M{"_id": fileMoveRequest.FileId}, bson.M{"$set": bson.M{"relative_path": fileMoveRequest.NewPath}})
+	if err != nil {
+		return base.NewFailResponse(-303, fileMoveRequest.BaseMessage.Tag, nil)
+	}
+
+	return base.NewSuccessResponse(fileMoveRequest.BaseMessage.Tag, nil)
+}
+
+func DeleteFile(fileDeleteRequest fileRequests.FileDeleteRequest) base.WSResponse {
+	session, collection := managers.GetMGoCollection("Files")
+	defer session.Close()
+
+	err := collection.Remove(bson.M{"_id": fileDeleteRequest.FileId})
+	if err != nil {
+		return base.NewFailResponse(-304, fileDeleteRequest.BaseMessage.Tag, nil)
+	}
+
+	return base.NewSuccessResponse(fileDeleteRequest.BaseMessage.Tag, nil)
 }

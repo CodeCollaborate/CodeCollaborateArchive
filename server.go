@@ -8,15 +8,17 @@ import (
 	"net/http"
 	"strings"
 
+	"os"
+
 	"github.com/CodeCollaborate/CodeCollaborate/managers"
 	"github.com/CodeCollaborate/CodeCollaborate/modules/base"
+	"github.com/CodeCollaborate/CodeCollaborate/modules/file/models"
 	"github.com/CodeCollaborate/CodeCollaborate/modules/file/requests"
 	"github.com/CodeCollaborate/CodeCollaborate/modules/project/models"
 	"github.com/CodeCollaborate/CodeCollaborate/modules/project/requests"
 	"github.com/CodeCollaborate/CodeCollaborate/modules/user/models"
 	"github.com/CodeCollaborate/CodeCollaborate/modules/user/requests"
 	"github.com/gorilla/websocket"
-	"os"
 )
 
 var addr = flag.String("addr", ":80", "http service address")
@@ -77,27 +79,24 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Deserialize from JSON
 						var projectCreateRequest projectRequests.ProjectCreateRequest
 						if err := json.Unmarshal(message, &projectCreateRequest); err != nil {
-
 							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
 							break
 						}
 						// Add BaseMessage reference
 						projectCreateRequest.BaseMessage = baseMessageObj
-
 						response = projectModels.CreateProject(projectCreateRequest)
+
 					case "Rename":
 
 						// {"Resource":"Project", "Action":"Rename", "UserId":"5615d78f4357413454000001", "Token": "$2a$10$FriLlb6m9GyxqxURN9YJj.8CmkefQF/uM454fSZY4LwazY.0X/nr2", "ProjectId": "5615d977435741340c000001", "NewName":"bar"}
 						// Deserialize from JSON
 						var projectRenameRequest projectRequests.ProjectRenameRequest
 						if err := json.Unmarshal(message, &projectRenameRequest); err != nil {
-
 							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
 							break
 						}
 						// Add BaseMessage reference
 						projectRenameRequest.BaseMessage = baseMessageObj
-
 						response = projectModels.RenameProject(projectRenameRequest)
 
 					case "GrantPermissions":
@@ -130,46 +129,87 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 						response = projectModels.RevokeProjectPermissions(projectRevokePermissionsRequest)
 
+					case "Delete":
+					// TODO
+
 					default:
 						response = base.NewFailResponse(-3, baseMessageObj.Tag, nil)
 						break
 					}
 				case "File":
-
-					// eg: {"Tag": 112, "Action": "Update", "Resource": "File", "ResId": "511", "CommitHash": "4as5d4w5as", "Changes": "@@ -40,16 +40,17 @@\n almost i\n+t\n n shape", "UserId": "5615d78f4357413454000001", "Token": "$2a$10$FriLlb6m9GyxqxURN9YJj.8CmkefQF/uM454fSZY4LwazY.0X/nr2"}
-					// Deserialize from JSON
-					var fileMessageObj fileRequests.FileRequest
-					if err := json.Unmarshal(message, &fileMessageObj); err != nil {
-
-						response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
-						break
-					}
-					// Add BaseMessage reference
-					fileMessageObj.BaseMessage = baseMessageObj
-
 					// TODO: Do something.
-					switch fileMessageObj.BaseMessage.Action {
-					// NOTE: this could be wrong, based on line 147 this looks correct
-					case "Add":
+					switch baseMessageObj.Action {
 
-					case "Update":
+					case "Create":
+						// Deserialize from JSON
+						var fileCreateRequest fileRequests.FileCreateRequest
+						if err := json.Unmarshal(message, &fileCreateRequest); err != nil {
+							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
+							break
+						}
+						// Add BaseMessage reference
+						fileCreateRequest.BaseMessage = baseMessageObj
+						response = fileModels.CreateFile(fileCreateRequest)
 
-					case "Remove":
+					case "Rename":
+						// Deserialize from JSON
+						var fileRenameRequest fileRequests.FileRenameRequest
+						if err := json.Unmarshal(message, &fileRenameRequest); err != nil {
+							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
+							break
+						}
+						// Add BaseMessage reference
+						fileRenameRequest.BaseMessage = baseMessageObj
+						response = fileModels.RenameFile(fileRenameRequest)
+
+					case "Move":
+						var fileMoveRequest fileRequests.FileMoveRequest
+						if err := json.Unmarshal(message, &fileMoveRequest); err != nil {
+							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
+							break
+						}
+						// Add BaseMessage reference
+						fileMoveRequest.BaseMessage = baseMessageObj
+						response = fileModels.MoveFile(fileMoveRequest)
+
+					case "Delete":
+						var fileDeleteRequest fileRequests.FileDeleteRequest
+						if err := json.Unmarshal(message, &fileDeleteRequest); err != nil {
+							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
+							break
+						}
+						// Add BaseMessage reference
+						fileDeleteRequest.BaseMessage = baseMessageObj
+						response = fileModels.DeleteFile(fileDeleteRequest)
+
+					case "Change":
+						// eg: {"Tag": 112, "Action": "Update", "Resource": "File", "ResId": "511", "CommitHash": "4as5d4w5as", "Changes": "@@ -40,16 +40,17 @@\n almost i\n+t\n n shape", "UserId": "5615d78f4357413454000001", "Token": "$2a$10$FriLlb6m9GyxqxURN9YJj.8CmkefQF/uM454fSZY4LwazY.0X/nr2"}
+						// Deserialize from JSON
+						var fileChangeRequest fileRequests.FileChangeRequest
+						if err := json.Unmarshal(message, &fileChangeRequest); err != nil {
+							response = base.NewFailResponse(-1, baseMessageObj.Tag, nil)
+							break
+						}
+						// Add BaseMessage reference
+						fileChangeRequest.BaseMessage = baseMessageObj
+
+						//TODO: Do database somethings
+
+						// Notify all connected clients
+						// TODO: Change to use RabbitMQ or Redis
+						notification := fileChangeRequest.GetNotification()
+						for _, WSConnection := range webSockets {
+							sendWebSocketMessage(WSConnection, websocket.TextMessage, notification)
+						}
 
 					default:
-						response = base.NewFailResponse(-3, fileMessageObj.BaseMessage.Tag, map[string]interface{}{"Action": fileMessageObj.BaseMessage.Action})
+						response = base.NewFailResponse(-3, baseMessageObj.Tag, map[string]interface{}{"Action": baseMessageObj.Action})
 						break
 					}
 
-					// Notify success; return new version number.
-					response = base.NewSuccessResponse(baseMessageObj.Tag, nil)
+					// // Notify success; return new version number.
+					// response = base.NewSuccessResponse(baseMessageObj.Tag, nil)
 
-					// Notify all connected clients
-					// TODO: Change to use RabbitMQ or Redis
-					notification := fileMessageObj.GetNotification()
-					for _, WSConnection := range webSockets {
-						sendWebSocketMessage(WSConnection, websocket.TextMessage, notification)
-					}
 				case "User":
 					switch baseMessageObj.Action {
 					case "Register":
@@ -201,6 +241,8 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 						//Check username/pw, login if needed.
 						response = userModels.LoginUser(userLoginRequest)
+
+						//TODO: maybe delete?
 
 					default:
 						response = base.NewFailResponse(-3, baseMessageObj.Tag, nil)
