@@ -10,6 +10,19 @@ type FileChangeRequest struct {
 	Changes     string           // Client-Computed changes (patch).
 }
 
+func (message *FileChangeRequest) GetNotification(fileVersion int) *base.WSNotification {
+	notification := new(base.WSNotification)
+	notification.Action = message.BaseRequest.Action
+	notification.Resource = message.BaseRequest.Resource
+	notification.ResId = message.BaseRequest.ResId
+	notification.Data = map[string]interface{}{
+		"Changes": message.Changes,
+		"FileVersion": fileVersion,
+	}
+	return notification
+}
+
+
 //
 // func (message *FileChangeRequest) ToString() string {
 //
@@ -22,13 +35,3 @@ type FileChangeRequest struct {
 // 	return buffer.String()
 // }
 //
-// func (message *FileChangeRequest) GetNotification() *base.WSNotification {
-// 	notification := new(base.WSNotification)
-// 	notification.Action = message.BaseMessage.Action
-// 	notification.Resource = message.BaseMessage.Resource
-// 	notification.ResId = message.BaseMessage.ResId
-// 	notification.Data = map[string]interface{}{
-// 		"changes": message.Changes,
-// 	}
-// 	return notification
-// }

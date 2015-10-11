@@ -26,11 +26,14 @@ var StatusCodes = map[int]string{
 	-205: "Error revoking permissions: Must have an owner",
 
 	// 300s - File Errors
+	-300: "No such file found",
 	-301: "Error creating File: Internal Error",
 	-302: "Error renaming File: Internal Error",
 	-303: "Error moving File: Internal Error",
 	-304: "Error deleting File: Internal Error",
 	-305: "Error creating File: Duplicate File",
+	-306: "Error renaming File: Duplicate File",
+	-307: "Error moving File: Duplicate File",
 
 	// 400s - Change Errors
 	-400: "Error inserting Change: Internal Error",

@@ -29,8 +29,6 @@ var upgrader = websocket.Upgrader{
 	},
 } // use default options
 
-var webSockets []*websocket.Conn
-
 func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 	if request.URL.Path != "/ws/" {
 		http.Error(responseWriter, "Not found", 404)
@@ -46,13 +44,14 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	webSockets = append(webSockets, wsConn)
+	managers.WebSocketConnected(wsConn)
 
 	defer wsConn.Close()
-	defer socketDisconnected(wsConn)
+	defer managers.WebSocketDisconnected(wsConn)
 
 	for {
-		messageType, message, err := wsConn.ReadMessage()
+		// messageType, message, err := wsConn.ReadMessage()
+		_, message, err := wsConn.ReadMessage()
 		var response = base.NewFailResponse(-0, 0, nil)
 		if err != nil {
 			log.Println("Error reading from WebSocket:", err)
@@ -153,7 +152,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						response = fileModels.CreateFile(fileCreateRequest)
 
 					case "Rename":
-						// {"Resource":"File", "Action":"Rename", "ResId":"561987a84357413b14000006", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "NewFileName":"foo2"}
+						// {"Resource":"File", "Action":"Rename", "ResId":"561987a84357413b14000006", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "NewName":"foo2"}
 						// Deserialize from JSON
 						var fileRenameRequest fileRequests.FileRenameRequest
 						if err := json.Unmarshal(message, &fileRenameRequest); err != nil {
@@ -201,20 +200,20 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 						response = fileModels.InsertChange(fileChangeRequest)
 
-						// Notify all connected clients
-						// TODO: Change to use RabbitMQ or Redis
-						// notification := fileChangeRequest.GetNotification()
-						// for _, WSConnection := range webSockets {
-						// 	sendWebSocketMessage(WSConnection, websocket.TextMessage, notification)
-						// }
+					// Notify all connected clients
+					// TODO: Change to use RabbitMQ or Redis
+					// notification := fileChangeRequest.GetNotification()
+					// for _, WSConnection := range webSockets {
+					// 	sendWebSocketMessage(WSConnection, websocket.TextMessage, notification)
+					// }
 
 					default:
 						response = base.NewFailResponse(-3, baseRequestObj.Tag, map[string]interface{}{"Action": baseRequestObj.Action})
 						break
 					}
 
-					// // Notify success; return new version number.
-					// response = base.NewSuccessResponse(baseRequestObj.Tag, nil)
+				// // Notify success; return new version number.
+				// response = base.NewSuccessResponse(baseRequestObj.Tag, nil)
 
 				case "User":
 					switch baseRequestObj.Action {
@@ -248,9 +247,9 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						//Check username/pw, login if needed.
 						response = userModels.LoginUser(userLoginRequest)
 
-						//TODO: maybe delete?
+					//TODO: maybe delete?
 
-						//TODO: Change PW
+					//TODO: Change PW
 
 					default:
 						response = base.NewFailResponse(-3, baseRequestObj.Tag, nil)
@@ -264,39 +263,11 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 			}
 		}
 
-		err = sendWebSocketMessage(wsConn, messageType, response)
+		err = managers.SendWebSocketMessage(wsConn, response)
 		if err != nil {
 			break
 		}
 	}
-}
-
-func socketDisconnected(conn *websocket.Conn) {
-	for p, v := range webSockets {
-		if v == conn {
-			copy(webSockets[p:], webSockets[p+1:])
-			webSockets[len(webSockets)-1] = nil // or the zero value of T
-			webSockets = webSockets[:len(webSockets)-1]
-		}
-	}
-}
-
-func sendWebSocketMessage(conn *websocket.Conn, messageType int, message interface{}) error {
-
-	respBytes, err := json.Marshal(message)
-	log.Println(string(respBytes[:]))
-
-	if err != nil {
-		log.Println("Error serializing response to JSON:", err)
-		return err
-	}
-
-	err = conn.WriteMessage(messageType, respBytes)
-	if err != nil {
-		log.Println("Error writing to WebSocket:", err)
-		return err
-	}
-	return nil
 }
 
 func handleHTTPConn(responseWriter http.ResponseWriter, request *http.Request) {
