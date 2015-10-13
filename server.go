@@ -55,7 +55,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 		if(messageType == websocket.BinaryMessage){
 			// file upload!
-			
+
 		}
 		var response = base.NewFailResponse(-0, 0, nil)
 		if err != nil {
@@ -70,7 +70,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 			response = base.NewFailResponse(-1, baseRequestObj.Tag, map[string]interface{}{"Error:": err})
 
 		} else {
-			if !(strings.Compare("User", baseRequestObj.Resource) == 0 && (strings.Compare("Register", baseRequestObj.Action) == 0 || strings.Compare("Login", baseRequestObj.Action) == 0)) && !userModels.CheckUserAuth(baseRequestObj) {
+			if !("User" == baseRequestObj.Resource && ("Register" == baseRequestObj.Action || "Login" == baseRequestObj.Action)) && !userModels.CheckUserAuth(baseRequestObj) {
 				response = base.NewFailResponse(-105, baseRequestObj.Tag, nil)
 			} else {
 
