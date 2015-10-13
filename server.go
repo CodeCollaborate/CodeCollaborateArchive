@@ -51,7 +51,12 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 	for {
 		// messageType, message, err := wsConn.ReadMessage()
-		_, message, err := wsConn.ReadMessage()
+		messageType, message, err := wsConn.ReadMessage()
+
+		if(messageType == websocket.BinaryMessage){
+			// file upload!
+			
+		}
 		var response = base.NewFailResponse(-0, 0, nil)
 		if err != nil {
 			log.Println("Error reading from WebSocket:", err)

@@ -1,0 +1,14 @@
+language: go
+
+# whitelist
+branches:
+  only:
+    - master
+    - stable
+    - release
+
+install:
+  - ./install-dependencies.sh
+script: 
+  - go test server.go
+  - go build server.go

@@ -1,3 +1,3 @@
-#!/usr/bin/env bash
-./1.UpdateDeps.sh
-./2.BuildAndRun.sh
+#!/usr/bin/env sh
+./install-dependencies
+./build.sh
