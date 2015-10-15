@@ -13,5 +13,5 @@ branches:
 install:
   - ./install-dependencies.sh
 script: 
-  - go test server.go
-  - go build server.go
+  - go test CodeCollaborate.go
+  - go build CodeCollaborate.go
