@@ -9,15 +9,16 @@ import (
 
 	"os"
 
-	"github.com/CodeCollaborate/CodeCollaborate/managers"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/base"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/file/models"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/file/requests"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/project/models"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/project/requests"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/user/models"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/user/requests"
 	"github.com/gorilla/websocket"
+	"github.com/CodeCollaborate/CodeCollaborate/server/managers"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/file/models"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/file/requests"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/project/models"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/project/requests"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/user/models"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/user/requests"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/models"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/requests"
 )
 
 var addr = flag.String("addr", ":80", "http service address")
@@ -52,25 +53,25 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 		// messageType, message, err := wsConn.ReadMessage()
 		messageType, message, err := wsConn.ReadMessage()
 
-		if(messageType == websocket.BinaryMessage){
+		if (messageType == websocket.BinaryMessage) {
 			// file upload!
 
 		}
-		var response = base.NewFailResponse(-0, 0, nil)
+		var response = baseModels.NewFailResponse(-0, 0, nil)
 		if err != nil {
 			log.Println("Error reading from WebSocket:", err)
 			break
 		}
 
 		// Deserialize data from json.
-		var baseRequestObj base.BaseRequest
+		var baseRequestObj baseRequests.BaseRequest
 		if err := json.Unmarshal(message, &baseRequestObj); err != nil {
 
-			response = base.NewFailResponse(-1, baseRequestObj.Tag, map[string]interface{}{"Error:": err})
+			response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, map[string]interface{}{"Error:": err})
 
 		} else {
 			if !("User" == baseRequestObj.Resource && ("Register" == baseRequestObj.Action || "Login" == baseRequestObj.Action)) && !userModels.CheckUserAuth(baseRequestObj) {
-				response = base.NewFailResponse(-105, baseRequestObj.Tag, nil)
+				response = baseModels.NewFailResponse(-105, baseRequestObj.Tag, nil)
 			} else {
 
 				switch baseRequestObj.Resource {
@@ -82,7 +83,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Deserialize from JSON
 						var projectCreateRequest projectRequests.ProjectCreateRequest
 						if err := json.Unmarshal(message, &projectCreateRequest); err != nil {
-							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
 						// Add BaseRequest reference
@@ -95,7 +96,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Deserialize from JSON
 						var projectRenameRequest projectRequests.ProjectRenameRequest
 						if err := json.Unmarshal(message, &projectRenameRequest); err != nil {
-							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
 						// Add BaseRequest reference
@@ -109,7 +110,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						var projectGrantPermissionsRequest projectRequests.ProjectGrantPermissionsRequest
 						if err := json.Unmarshal(message, &projectGrantPermissionsRequest); err != nil {
 
-							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
 						// Add BaseRequest reference
@@ -124,7 +125,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						var projectRevokePermissionsRequest projectRequests.ProjectRevokePermissionsRequest
 						if err := json.Unmarshal(message, &projectRevokePermissionsRequest); err != nil {
 
-							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
 						// Add BaseRequest reference
@@ -136,7 +137,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 					// TODO
 
 					default:
-						response = base.NewFailResponse(-3, baseRequestObj.Tag, nil)
+						response = baseModels.NewFailResponse(-3, baseRequestObj.Tag, nil)
 						break
 					}
 				case "File":
@@ -148,7 +149,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Deserialize from JSON
 						var fileCreateRequest fileRequests.FileCreateRequest
 						if err := json.Unmarshal(message, &fileCreateRequest); err != nil {
-							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
 						// Add BaseRequest reference
@@ -160,7 +161,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Deserialize from JSON
 						var fileRenameRequest fileRequests.FileRenameRequest
 						if err := json.Unmarshal(message, &fileRenameRequest); err != nil {
-							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
 						// Add BaseRequest reference
@@ -172,7 +173,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Deserialize from JSON
 						var fileMoveRequest fileRequests.FileMoveRequest
 						if err := json.Unmarshal(message, &fileMoveRequest); err != nil {
-							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
 						// Add BaseRequest reference
@@ -184,7 +185,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Deserialize from JSON
 						var fileDeleteRequest fileRequests.FileDeleteRequest
 						if err := json.Unmarshal(message, &fileDeleteRequest); err != nil {
-							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
 						// Add BaseRequest reference
@@ -196,7 +197,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Deserialize from JSON
 						var fileChangeRequest fileRequests.FileChangeRequest
 						if err := json.Unmarshal(message, &fileChangeRequest); err != nil {
-							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
 						// Add BaseRequest reference
@@ -212,7 +213,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 					// }
 
 					default:
-						response = base.NewFailResponse(-3, baseRequestObj.Tag, map[string]interface{}{"Action": baseRequestObj.Action})
+						response = baseModels.NewFailResponse(-3, baseRequestObj.Tag, map[string]interface{}{"Action": baseRequestObj.Action})
 						break
 					}
 
@@ -228,7 +229,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						var userRegisterRequest userRequests.UserRegisterRequest
 						if err := json.Unmarshal(message, &userRegisterRequest); err != nil {
 
-							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
 						// Add BaseRequest reference
@@ -242,7 +243,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						var userLoginRequest userRequests.UserLoginRequest
 						if err := json.Unmarshal(message, &userLoginRequest); err != nil {
 
-							response = base.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
 						// Add BaseRequest reference
@@ -256,12 +257,12 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 					//TODO: Change PW
 
 					default:
-						response = base.NewFailResponse(-3, baseRequestObj.Tag, nil)
+						response = baseModels.NewFailResponse(-3, baseRequestObj.Tag, nil)
 						break
 					}
 				default:
 					// Invalid resource type
-					response = base.NewFailResponse(-2, baseRequestObj.Tag, nil)
+					response = baseModels.NewFailResponse(-2, baseRequestObj.Tag, nil)
 					break
 				}
 			}

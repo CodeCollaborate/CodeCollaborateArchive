@@ -1,8 +1,6 @@
-package base
+package baseModels
 
-import (
-	"bytes"
-)
+import "github.com/CodeCollaborate/CodeCollaborate/server/modules/base"
 
 /************************************************
  Response Types
@@ -25,38 +23,9 @@ func NewFailResponse(Status int, Tag int64, Data map[string]interface{}) WSRespo
 func newBaseResponse(Status int, Tag int64, Data map[string]interface{}) WSResponse {
 	baseResponse := WSResponse{}
 	baseResponse.Status = Status
-	baseResponse.Message = StatusCodes[Status]
+	baseResponse.Message = base.StatusCodes[Status]
 	baseResponse.Tag = Tag
 	baseResponse.Data = Data
 
 	return baseResponse
-}
-
-type BaseRequest struct {
-	Tag      int64  // Request tag
-	Action   string // Add, Update, Remove
-	Resource string // Project vs file
-	ResId    string // Id of resource
-	UserId   string // UserId
-	Token    string // Token
-}
-
-func (message *BaseRequest) ToString() string {
-
-	var buffer bytes.Buffer
-
-	buffer.WriteString(message.Action)
-	buffer.WriteString(" ")
-	buffer.WriteString(message.Resource)
-	buffer.WriteString(": ")
-	buffer.WriteString(message.ResId)
-
-	return buffer.String()
-}
-
-type WSNotification struct {
-	Action   string                 // Add, Update, Remove
-	Resource string                 // Project vs file
-	ResId    string                 // Id of resource
-	Data     map[string]interface{} // Any other data
 }

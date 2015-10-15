@@ -4,12 +4,13 @@ import (
 	"log"
 	"time"
 
-	"github.com/CodeCollaborate/CodeCollaborate/managers"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/base"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/user/requests"
+	"github.com/CodeCollaborate/CodeCollaborate/server/managers"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/user/requests"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/models"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/requests"
 )
 
 type User struct {
@@ -21,13 +22,13 @@ type User struct {
 	Tokens        []string `json:"-"` // Token after logged in.
 }
 
-func RegisterUser(registrationRequest userRequests.UserRegisterRequest) base.WSResponse {
+func RegisterUser(registrationRequest userRequests.UserRegisterRequest) baseModels.WSResponse {
 
 	// Hash password using bcrypt
 	pwHashBytes, err := bcrypt.GenerateFromPassword([]byte(registrationRequest.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Failed to hash password:", err)
-		return base.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil)
+		return baseModels.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil)
 	}
 
 	// Create new UserAuthData object
@@ -52,7 +53,7 @@ func RegisterUser(registrationRequest userRequests.UserRegisterRequest) base.WSR
 	err = collection.EnsureIndex(index)
 	if err != nil {
 		log.Println("Failed to ensure username index:", err)
-		return base.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil)
+		return baseModels.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil)
 	}
 
 	// Register new user
@@ -61,15 +62,15 @@ func RegisterUser(registrationRequest userRequests.UserRegisterRequest) base.WSR
 		// Duplicate entry
 		if mgo.IsDup(err) {
 			log.Println("Error registering user:", err)
-			return base.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil)
+			return baseModels.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil)
 		}
-		return base.NewFailResponse(-102, registrationRequest.BaseRequest.Tag, nil)
+		return baseModels.NewFailResponse(-102, registrationRequest.BaseRequest.Tag, nil)
 	}
 
-	return base.NewSuccessResponse(registrationRequest.BaseRequest.Tag, nil)
+	return baseModels.NewSuccessResponse(registrationRequest.BaseRequest.Tag, nil)
 }
 
-func LoginUser(loginRequest userRequests.UserLoginRequest) base.WSResponse {
+func LoginUser(loginRequest userRequests.UserLoginRequest) baseModels.WSResponse {
 
 	// Get new DB connection
 	session, collection := managers.GetMGoCollection("Users")
@@ -78,18 +79,18 @@ func LoginUser(loginRequest userRequests.UserLoginRequest) base.WSResponse {
 	user := User{}
 	if err := collection.Find(bson.M{"$or": []interface{}{bson.M{"username": loginRequest.UsernameOREmail}, bson.M{"email": loginRequest.UsernameOREmail}}}).One(&user); err != nil {
 		// Could not find user
-		return base.NewFailResponse(-104, loginRequest.BaseRequest.Tag, nil)
+		return baseModels.NewFailResponse(-104, loginRequest.BaseRequest.Tag, nil)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password_Hash), []byte(loginRequest.Password)); err != nil {
 		// Password did not match.
-		return base.NewFailResponse(-104, loginRequest.BaseRequest.Tag, nil)
+		return baseModels.NewFailResponse(-104, loginRequest.BaseRequest.Tag, nil)
 	}
 
 	tokenBytes, err := bcrypt.GenerateFromPassword([]byte(loginRequest.UsernameOREmail+time.Now().String()), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Failed to generate token:", err)
-		return base.NewFailResponse(-103, loginRequest.BaseRequest.Tag, nil)
+		return baseModels.NewFailResponse(-103, loginRequest.BaseRequest.Tag, nil)
 	}
 
 	token := string(tokenBytes[:])
@@ -97,13 +98,13 @@ func LoginUser(loginRequest userRequests.UserLoginRequest) base.WSResponse {
 	err = addToken(collection, user, token)
 	if err != nil {
 		log.Println("Failed to save token:", err)
-		return base.NewFailResponse(-103, loginRequest.BaseRequest.Tag, nil)
+		return baseModels.NewFailResponse(-103, loginRequest.BaseRequest.Tag, nil)
 	}
 
-	return base.NewSuccessResponse(loginRequest.BaseRequest.Tag, map[string]interface{}{"UserId": user.Id, "Token": token})
+	return baseModels.NewSuccessResponse(loginRequest.BaseRequest.Tag, map[string]interface{}{"UserId": user.Id, "Token": token})
 }
 
-func CheckUserAuth(baseRequest base.BaseRequest) bool {
+func CheckUserAuth(baseRequest baseRequests.BaseRequest) bool {
 
 	// Get new DB connection
 	session, collection := managers.GetMGoCollection("Users")

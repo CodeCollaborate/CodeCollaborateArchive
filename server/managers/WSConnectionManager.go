@@ -1,9 +1,9 @@
 package managers
 import (
 	"github.com/gorilla/websocket"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/base"
 	"log"
 	"encoding/json"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/models"
 )
 
 //var webSockets map[string][]*websocket.Conn
@@ -23,7 +23,7 @@ func WebSocketDisconnected(conn *websocket.Conn) {
 	}
 }
 
-func NotifyAll(projectId string, notification *base.WSNotification) {
+func NotifyAll(projectId string, notification *baseModels.WSNotification) {
 	for _, v := range webSockets {
 		SendWebSocketMessage(v, notification)
 	}

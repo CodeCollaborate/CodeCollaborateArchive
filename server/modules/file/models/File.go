@@ -3,9 +3,9 @@ package fileModels
 import (
 	"log"
 
-	"github.com/CodeCollaborate/CodeCollaborate/managers"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/base"
-	"github.com/CodeCollaborate/CodeCollaborate/modules/file/requests"
+	"github.com/CodeCollaborate/CodeCollaborate/server/managers"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/models"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/file/requests"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -18,7 +18,7 @@ type File struct {
 	Project      string                        // Reference to Project object
 }
 
-func CreateFile(fileCreateRequest fileRequests.FileCreateRequest) base.WSResponse {
+func CreateFile(fileCreateRequest fileRequests.FileCreateRequest) baseModels.WSResponse {
 
 	file := new(File)
 	file.Id = managers.NewObjectIdString()
@@ -40,32 +40,32 @@ func CreateFile(fileCreateRequest fileRequests.FileCreateRequest) base.WSRespons
 	err := collection.EnsureIndex(index)
 	if err != nil {
 		log.Println("Failed to ensure username index:", err)
-		return base.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil)
+		return baseModels.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil)
 	}
 
 	err = collection.Insert(file)
 	if err != nil {
 		if mgo.IsDup(err) {
 			log.Println("Error registering user:", err)
-			return base.NewFailResponse(-305, fileCreateRequest.BaseRequest.Tag, nil)
+			return baseModels.NewFailResponse(-305, fileCreateRequest.BaseRequest.Tag, nil)
 		}
-		return base.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil)
+		return baseModels.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil)
 	}
 
 	managers.NotifyAll(file.Project, fileCreateRequest.GetNotification(file.Id))
 
-	return base.NewSuccessResponse(fileCreateRequest.BaseRequest.Tag, map[string]interface{}{"FileId": file.Id})
+	return baseModels.NewSuccessResponse(fileCreateRequest.BaseRequest.Tag, map[string]interface{}{"FileId": file.Id})
 
 }
 
-func RenameFile(fileRenameRequest fileRequests.FileRenameRequest) base.WSResponse {
+func RenameFile(fileRenameRequest fileRequests.FileRenameRequest) baseModels.WSResponse {
 	session, collection := managers.GetMGoCollection("Files")
 	defer session.Close()
 
 	// Check that file exists
 	file, err := GetFileById(fileRenameRequest.BaseRequest.ResId);
 	if err != nil {
-		return base.NewFailResponse(-300, fileRenameRequest.BaseRequest.Tag, nil)
+		return baseModels.NewFailResponse(-300, fileRenameRequest.BaseRequest.Tag, nil)
 	}
 
 	file.Version++;
@@ -74,24 +74,24 @@ func RenameFile(fileRenameRequest fileRequests.FileRenameRequest) base.WSRespons
 	if err != nil {
 		if mgo.IsDup(err) {
 			log.Println("Error registering user:", err)
-			return base.NewFailResponse(-306, fileRenameRequest.BaseRequest.Tag, nil)
+			return baseModels.NewFailResponse(-306, fileRenameRequest.BaseRequest.Tag, nil)
 		}
-		return base.NewFailResponse(-302, fileRenameRequest.BaseRequest.Tag, nil)
+		return baseModels.NewFailResponse(-302, fileRenameRequest.BaseRequest.Tag, nil)
 	}
 
 	managers.NotifyAll(file.Project, fileRenameRequest.GetNotification())
 
-	return base.NewSuccessResponse(fileRenameRequest.BaseRequest.Tag, nil)
+	return baseModels.NewSuccessResponse(fileRenameRequest.BaseRequest.Tag, nil)
 }
 
-func MoveFile(fileMoveRequest fileRequests.FileMoveRequest) base.WSResponse {
+func MoveFile(fileMoveRequest fileRequests.FileMoveRequest) baseModels.WSResponse {
 	session, collection := managers.GetMGoCollection("Files")
 	defer session.Close()
 
 	// Check that file exists
 	file, err := GetFileById(fileMoveRequest.BaseRequest.ResId);
 	if err != nil {
-		return base.NewFailResponse(-300, fileMoveRequest.BaseRequest.Tag, nil)
+		return baseModels.NewFailResponse(-300, fileMoveRequest.BaseRequest.Tag, nil)
 	}
 
 	file.Version++;
@@ -100,34 +100,34 @@ func MoveFile(fileMoveRequest fileRequests.FileMoveRequest) base.WSResponse {
 	if err != nil {
 		if mgo.IsDup(err) {
 			log.Println("Error registering user:", err)
-			return base.NewFailResponse(-307, fileMoveRequest.BaseRequest.Tag, nil)
+			return baseModels.NewFailResponse(-307, fileMoveRequest.BaseRequest.Tag, nil)
 		}
-		return base.NewFailResponse(-303, fileMoveRequest.BaseRequest.Tag, nil)
+		return baseModels.NewFailResponse(-303, fileMoveRequest.BaseRequest.Tag, nil)
 	}
 
 	managers.NotifyAll(file.Project, fileMoveRequest.GetNotification())
 
-	return base.NewSuccessResponse(fileMoveRequest.BaseRequest.Tag, nil)
+	return baseModels.NewSuccessResponse(fileMoveRequest.BaseRequest.Tag, nil)
 }
 
-func DeleteFile(fileDeleteRequest fileRequests.FileDeleteRequest) base.WSResponse {
+func DeleteFile(fileDeleteRequest fileRequests.FileDeleteRequest) baseModels.WSResponse {
 	session, collection := managers.GetMGoCollection("Files")
 	defer session.Close()
 
 	// Check that file exists
 	file, err := GetFileById(fileDeleteRequest.BaseRequest.ResId);
 	if err != nil {
-		return base.NewFailResponse(-300, fileDeleteRequest.BaseRequest.Tag, nil)
+		return baseModels.NewFailResponse(-300, fileDeleteRequest.BaseRequest.Tag, nil)
 	}
 
 	err = collection.Remove(bson.M{"_id": fileDeleteRequest.BaseRequest.ResId})
 	if err != nil {
-		return base.NewFailResponse(-304, fileDeleteRequest.BaseRequest.Tag, nil)
+		return baseModels.NewFailResponse(-304, fileDeleteRequest.BaseRequest.Tag, nil)
 	}
 
 	managers.NotifyAll(file.Project, fileDeleteRequest.GetNotification())
 
-	return base.NewSuccessResponse(fileDeleteRequest.BaseRequest.Tag, nil)
+	return baseModels.NewSuccessResponse(fileDeleteRequest.BaseRequest.Tag, nil)
 }
 
 func GetFileById(id string) (*File, error) {

@@ -1,17 +1,18 @@
 package fileRequests
 
 import (
-	"github.com/CodeCollaborate/CodeCollaborate/modules/base"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/requests"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/models"
 )
 
 type FileChangeRequest struct {
-	BaseRequest base.BaseRequest // Add, Update, Remove
-	FileVersion int              // Version of file to be updated
-	Changes     string           // Client-Computed changes (patch).
+	BaseRequest baseRequests.BaseRequest // Add, Update, Remove
+	FileVersion int                      // Version of file to be updated
+	Changes     string                   // Client-Computed changes (patch).
 }
 
-func (message *FileChangeRequest) GetNotification(fileVersion int) *base.WSNotification {
-	notification := new(base.WSNotification)
+func (message *FileChangeRequest) GetNotification(fileVersion int) *baseModels.WSNotification {
+	notification := new(baseModels.WSNotification)
 	notification.Action = message.BaseRequest.Action
 	notification.Resource = message.BaseRequest.Resource
 	notification.ResId = message.BaseRequest.ResId

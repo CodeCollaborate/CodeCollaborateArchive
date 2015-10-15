@@ -1,14 +1,17 @@
 package fileRequests
 
-import "github.com/CodeCollaborate/CodeCollaborate/modules/base"
+import (
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/requests"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/models"
+)
 
 type FileMoveRequest struct {
-	BaseRequest base.BaseRequest // Add, Update, Remove
+	BaseRequest baseRequests.BaseRequest // Add, Update, Remove
 	NewPath     string           // New File Name
 }
 
-func (message *FileMoveRequest) GetNotification() *base.WSNotification {
-	notification := new(base.WSNotification)
+func (message *FileMoveRequest) GetNotification() *baseModels.WSNotification {
+	notification := new(baseModels.WSNotification)
 	notification.Action = message.BaseRequest.Action
 	notification.Resource = message.BaseRequest.Resource
 	notification.ResId = message.BaseRequest.ResId
