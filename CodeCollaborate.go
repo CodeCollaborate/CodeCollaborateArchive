@@ -51,12 +51,8 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 	for {
 		// messageType, message, err := wsConn.ReadMessage()
-		messageType, message, err := wsConn.ReadMessage()
+		_, message, err := wsConn.ReadMessage()
 
-		if (messageType == websocket.BinaryMessage) {
-			// file upload!
-
-		}
 		var response = baseModels.NewFailResponse(-0, 0, nil)
 		if err != nil {
 			log.Println("Error reading from WebSocket:", err)
@@ -193,7 +189,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						response = fileModels.DeleteFile(fileDeleteRequest)
 
 					case "Change":
-						// {"Tag": 112, "Action": "Change", "Resource": "File", "ResId": "561987a44357413b14000004", "FileVersion":0, "Changes": "@@ -40,16 +40,17 @@\n almost i\n+t\n n shape", "UserId": "561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e"}
+						// {"Tag": 112, "Action": "Change", "Resource": "File", "ResId": "561987a84357413b14000006", "FileVersion":0, "Changes": "@@ -40,16 +40,17 @@\n almost i\n+t\n n shape", "UserId": "561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e"}
 						// Deserialize from JSON
 						var fileChangeRequest fileRequests.FileChangeRequest
 						if err := json.Unmarshal(message, &fileChangeRequest); err != nil {
@@ -205,12 +201,16 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 						response = fileModels.InsertChange(fileChangeRequest)
 
-					// Notify all connected clients
-					// TODO: Change to use RabbitMQ or Redis
-					// notification := fileChangeRequest.GetNotification()
-					// for _, WSConnection := range webSockets {
-					// 	sendWebSocketMessage(WSConnection, websocket.TextMessage, notification)
-					// }
+					case "Pull":
+						var filePullRequest fileRequests.FilePullRequest
+						if err := json.Unmarshal(message, &filePullRequest); err != nil {
+							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							break
+						}
+						// Add BaseRequest reference
+						filePullRequest.BaseRequest = baseRequestObj
+
+						response = fileModels.PullFile(filePullRequest)
 
 					default:
 						response = baseModels.NewFailResponse(-3, baseRequestObj.Tag, map[string]interface{}{"Action": baseRequestObj.Action})

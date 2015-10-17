@@ -8,6 +8,8 @@ import (
 	"github.com/CodeCollaborate/CodeCollaborate/server/modules/file/requests"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"io/ioutil"
+	"os"
 )
 
 type File struct {
@@ -16,6 +18,15 @@ type File struct {
 	RelativePath string `bson:"relative_path"` // Path of file
 	Version      int                           // File version
 	Project      string                        // Reference to Project object
+	filePath     string `bson:"-",json:"-"`
+}
+
+func (file File) getPath() string {
+	if (file.filePath == "") {
+		// Change to use byte buffer for efficiency
+		file.filePath = "files/" + file.Project + "/" + file.RelativePath + file.Name
+	}
+	return file.filePath
 }
 
 func CreateFile(fileCreateRequest fileRequests.FileCreateRequest) baseModels.WSResponse {
@@ -30,6 +41,7 @@ func CreateFile(fileCreateRequest fileRequests.FileCreateRequest) baseModels.WSR
 	session, collection := managers.GetMGoCollection("Files")
 	defer session.Close()
 
+	// Create indexes
 	index := mgo.Index{
 		Key:        []string{"name", "relative_path"},
 		Unique:     true,
@@ -39,16 +51,29 @@ func CreateFile(fileCreateRequest fileRequests.FileCreateRequest) baseModels.WSR
 	}
 	err := collection.EnsureIndex(index)
 	if err != nil {
-		log.Println("Failed to ensure username index:", err)
+		log.Println("Failed to ensure file name/path index:", err)
 		return baseModels.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil)
 	}
 
+	// Insert file record
 	err = collection.Insert(file)
 	if err != nil {
 		if mgo.IsDup(err) {
-			log.Println("Error registering user:", err)
+			log.Println("Error creating file record:", err)
 			return baseModels.NewFailResponse(-305, fileCreateRequest.BaseRequest.Tag, nil)
 		}
+		return baseModels.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil)
+	}
+
+	// Write file to disk
+	err = os.MkdirAll("files/" + fileCreateRequest.ProjectId + "/" + fileCreateRequest.RelativePath, os.ModeExclusive)
+	if err != nil {
+		log.Println("Failed to create file directory:", err)
+		return baseModels.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil)
+	}
+	err = ioutil.WriteFile(file.getPath(), fileCreateRequest.FileBytes, os.ModeExclusive)
+	if err != nil {
+		log.Println("Failed to write file:", err)
 		return baseModels.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil)
 	}
 
@@ -120,6 +145,8 @@ func DeleteFile(fileDeleteRequest fileRequests.FileDeleteRequest) baseModels.WSR
 		return baseModels.NewFailResponse(-300, fileDeleteRequest.BaseRequest.Tag, nil)
 	}
 
+	err = os.Remove(file.getPath())
+
 	err = collection.Remove(bson.M{"_id": fileDeleteRequest.BaseRequest.ResId})
 	if err != nil {
 		return baseModels.NewFailResponse(-304, fileDeleteRequest.BaseRequest.Tag, nil)
@@ -128,6 +155,33 @@ func DeleteFile(fileDeleteRequest fileRequests.FileDeleteRequest) baseModels.WSR
 	managers.NotifyAll(file.Project, fileDeleteRequest.GetNotification())
 
 	return baseModels.NewSuccessResponse(fileDeleteRequest.BaseRequest.Tag, nil)
+}
+
+func PullFile(filePullRequest fileRequests.FilePullRequest) baseModels.WSResponse {
+
+	// Check that file exists
+	file, err := GetFileById(filePullRequest.BaseRequest.ResId);
+	if err != nil {
+		return baseModels.NewFailResponse(-300, filePullRequest.BaseRequest.Tag, nil)
+	}
+
+	// Read file from disk
+	if _, err := os.Stat(file.getPath()); os.IsNotExist(err) {
+		return baseModels.NewSuccessResponse(filePullRequest.BaseRequest.Tag, map[string]interface{}{"FileBytes": "", "Changes": ""})
+	}
+	fileBytes, err := ioutil.ReadFile(file.getPath())
+	if err != nil {
+		log.Println("Failed to read from file:", err)
+		return baseModels.NewFailResponse(-301, filePullRequest.BaseRequest.Tag, nil)
+	}
+
+	changes, err := GetChangesByFile(file.Id)
+	if err != nil {
+		log.Println("Failed to retrieve changes:", err)
+		return baseModels.NewFailResponse(-402, filePullRequest.BaseRequest.Tag, nil)
+	}
+
+	return baseModels.NewSuccessResponse(filePullRequest.BaseRequest.Tag, map[string]interface{}{"FileBytes": fileBytes, "Changes": changes})
 }
 
 func GetFileById(id string) (*File, error) {
@@ -146,19 +200,19 @@ func GetFileById(id string) (*File, error) {
 	return result, nil
 }
 
-func GetFileByPathNamee(path string, name string) (*File, error) {
-	// Get new DB connection
-	session, collection := managers.GetMGoCollection("Files")
-	defer session.Close()
-
-	result := new(File)
-	err := collection.Find(bson.M{"$or": []interface{}{bson.M{"relative_path": path}, bson.M{"name": name}}}).One(&result)
-	if err != nil {
-		log.Println("Failed to retrieve File")
-		log.Println(err)
-		return nil, err
-	}
-
-	return result, nil
-}
+//func GetFileByPathName(path string, name string) (*File, error) {
+//	// Get new DB connection
+//	session, collection := managers.GetMGoCollection("Files")
+//	defer session.Close()
+//
+//	result := new(File)
+//	err := collection.Find(bson.M{"$or": []interface{}{bson.M{"relative_path": path}, bson.M{"name": name}}}).One(&result)
+//	if err != nil {
+//		log.Println("Failed to retrieve File")
+//		log.Println(err)
+//		return nil, err
+//	}
+//
+//	return result, nil
+//}
 

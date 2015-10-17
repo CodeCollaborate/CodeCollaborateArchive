@@ -7,9 +7,10 @@ import (
 
 type FileCreateRequest struct {
 	BaseRequest  baseRequests.BaseRequest // Add, Update, Remove
-	Name         string           // Name of file
-	RelativePath string           // Relative path w/in project
-	ProjectId    string           // Owned by project with this id
+	Name         string                   // Name of file
+	RelativePath string                   // Relative path w/in project
+	ProjectId    string                   // Owned by project with this id
+	FileBytes    []byte                   // Bytes of the file - binary
 }
 
 func (message *FileCreateRequest) GetNotification(resourceId string) *baseModels.WSNotification {

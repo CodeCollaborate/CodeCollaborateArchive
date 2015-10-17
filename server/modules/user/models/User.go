@@ -62,9 +62,9 @@ func RegisterUser(registrationRequest userRequests.UserRegisterRequest) baseMode
 		// Duplicate entry
 		if mgo.IsDup(err) {
 			log.Println("Error registering user:", err)
-			return baseModels.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil)
+			return baseModels.NewFailResponse(-102, registrationRequest.BaseRequest.Tag, nil)
 		}
-		return baseModels.NewFailResponse(-102, registrationRequest.BaseRequest.Tag, nil)
+		return baseModels.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil)
 	}
 
 	return baseModels.NewSuccessResponse(registrationRequest.BaseRequest.Tag, nil)

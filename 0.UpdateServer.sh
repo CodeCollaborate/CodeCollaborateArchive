@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
-./install-dependencies
+./install-dependencies.sh
 ./build.sh

@@ -78,3 +78,35 @@ func InsertChange(fileChangeRequest fileRequests.FileChangeRequest) baseModels.W
 	return baseModels.NewSuccessResponse(fileChangeRequest.BaseRequest.Tag, nil)
 
 }
+
+func GetChangeById(id string) (*FileChange, error) {
+	// Get new DB connection
+	session, collection := managers.GetMGoCollection("Changes")
+	defer session.Close()
+
+	result := new(FileChange)
+	err := collection.Find(bson.M{"_id": id}).One(&result)
+	if err != nil {
+		log.Println("Failed to retrieve FileChange")
+		log.Println(err)
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func GetChangesByFile(fileId string) ([]FileChange, error) {
+	// Get new DB connection
+	session, collection := managers.GetMGoCollection("Changes")
+	defer session.Close()
+
+	var result []FileChange
+	err := collection.Find(bson.M{"file": fileId}).Sort("version").All(&result)
+	if err != nil {
+		log.Println("Failed to retrieve FileChanges")
+		log.Println(err)
+		return nil, err
+	}
+
+	return result, nil
+}

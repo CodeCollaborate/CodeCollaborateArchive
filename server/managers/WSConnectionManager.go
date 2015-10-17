@@ -24,6 +24,8 @@ func WebSocketDisconnected(conn *websocket.Conn) {
 }
 
 func NotifyAll(projectId string, notification *baseModels.WSNotification) {
+	// Notify all connected clients
+	// TODO: Change to use RabbitMQ or Redis
 	for _, v := range webSockets {
 		SendWebSocketMessage(v, notification)
 	}

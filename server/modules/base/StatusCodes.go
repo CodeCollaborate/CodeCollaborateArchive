@@ -38,5 +38,6 @@ var StatusCodes = map[int]string{
 	// 400s - Change Errors
 	-400: "Error inserting Change: Internal Error",
 	-401: "Error inserting Change: Duplicate Version Number",
+	-402: "Error reading Change: Internal Error",
 	// -420:"Error, too blazed"
 }
