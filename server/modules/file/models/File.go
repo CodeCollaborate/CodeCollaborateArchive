@@ -77,7 +77,7 @@ func CreateFile(fileCreateRequest fileRequests.FileCreateRequest) baseModels.WSR
 		return baseModels.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil)
 	}
 
-	managers.NotifyAll(file.Project, fileCreateRequest.GetNotification(file.Id))
+	managers.NotifyProjectClients(file.Project, fileCreateRequest.GetNotification(file.Id))
 
 	return baseModels.NewSuccessResponse(fileCreateRequest.BaseRequest.Tag, map[string]interface{}{"FileId": file.Id})
 
@@ -104,7 +104,7 @@ func RenameFile(fileRenameRequest fileRequests.FileRenameRequest) baseModels.WSR
 		return baseModels.NewFailResponse(-302, fileRenameRequest.BaseRequest.Tag, nil)
 	}
 
-	managers.NotifyAll(file.Project, fileRenameRequest.GetNotification())
+	managers.NotifyProjectClients(file.Project, fileRenameRequest.GetNotification())
 
 	return baseModels.NewSuccessResponse(fileRenameRequest.BaseRequest.Tag, nil)
 }
@@ -130,7 +130,7 @@ func MoveFile(fileMoveRequest fileRequests.FileMoveRequest) baseModels.WSRespons
 		return baseModels.NewFailResponse(-303, fileMoveRequest.BaseRequest.Tag, nil)
 	}
 
-	managers.NotifyAll(file.Project, fileMoveRequest.GetNotification())
+	managers.NotifyProjectClients(file.Project, fileMoveRequest.GetNotification())
 
 	return baseModels.NewSuccessResponse(fileMoveRequest.BaseRequest.Tag, nil)
 }
@@ -152,7 +152,7 @@ func DeleteFile(fileDeleteRequest fileRequests.FileDeleteRequest) baseModels.WSR
 		return baseModels.NewFailResponse(-304, fileDeleteRequest.BaseRequest.Tag, nil)
 	}
 
-	managers.NotifyAll(file.Project, fileDeleteRequest.GetNotification())
+	managers.NotifyProjectClients(file.Project, fileDeleteRequest.GetNotification())
 
 	return baseModels.NewSuccessResponse(fileDeleteRequest.BaseRequest.Tag, nil)
 }

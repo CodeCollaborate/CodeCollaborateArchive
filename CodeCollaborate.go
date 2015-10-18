@@ -44,10 +44,12 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	managers.WebSocketConnected(wsConn)
-
 	defer wsConn.Close()
 	defer managers.WebSocketDisconnected(wsConn)
+	// move above adding it to the web socket structure in case adding it fails part way through
+
+	// subscriptions moved to User Subscribe request
+	// managers.NewWebSocketConnected(wsConn)
 
 	for {
 		// messageType, message, err := wsConn.ReadMessage()
@@ -242,7 +244,6 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Deserialize from JSON
 						var userLoginRequest userRequests.UserLoginRequest
 						if err := json.Unmarshal(message, &userLoginRequest); err != nil {
-
 							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
@@ -251,6 +252,17 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 						//Check username/pw, login if needed.
 						response = userModels.LoginUser(userLoginRequest)
+
+					case "UserSubscribeRequest":
+
+						var userSubscribeRequest = userRequests.UserSubscribeRequest
+						if err := json.Unmarshal(message, &userLoginRequest); err != nil {
+							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							break
+						}
+						userSubscribeRequest.BaseRequest = baseRequestObj
+						response = userModels.Subscribe(userSubscribeRequest, wsConn)
+
 
 					//TODO: maybe delete?
 

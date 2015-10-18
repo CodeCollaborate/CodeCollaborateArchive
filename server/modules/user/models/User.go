@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/CodeCollaborate/CodeCollaborate/server/managers"
 	"github.com/CodeCollaborate/CodeCollaborate/server/modules/user/requests"
 	"golang.org/x/crypto/bcrypt"
@@ -102,6 +103,15 @@ func LoginUser(loginRequest userRequests.UserLoginRequest) baseModels.WSResponse
 	}
 
 	return baseModels.NewSuccessResponse(loginRequest.BaseRequest.Tag, map[string]interface{}{"UserId": user.Id, "Token": token})
+}
+
+func Subscribe(subscriptionRequest userRequests.UserSubscribeRequest, wsConn *websocket.Conn) baseModels.WSResponse {
+
+	toSubscribe := subscriptionRequest.Projects
+	for v := range toSubscribe {
+		managers.WebSocketAddProject(v, wsConn)
+	}
+	return baseModels.NewSuccessResponse(subscriptionRequest.BaseRequest.Tag, nil)
 }
 
 func CheckUserAuth(baseRequest baseRequests.BaseRequest) bool {

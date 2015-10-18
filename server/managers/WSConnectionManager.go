@@ -1,4 +1,5 @@
 package managers
+
 import (
 	"github.com/gorilla/websocket"
 	"log"
@@ -6,33 +7,48 @@ import (
 	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/models"
 )
 
-//var webSockets map[string][]*websocket.Conn
-var webSockets []*websocket.Conn
+var proj_webSockets = map[string][]*websocket.Conn{} // needed initialized
+var webSockets_proj = map[*websocket.Conn][]string{}
 
-func WebSocketConnected(conn *websocket.Conn) {
-	webSockets = append(webSockets, conn)
+func NewWebSocketConnected(conn *websocket.Conn) {
+	// deprecated
+	proj_webSockets = append(proj_webSockets, conn)
+}
+
+func WebSocketAddProject(conn *websocket.Conn, projectId string) {
+	proj_webSockets[projectId] = append(proj_webSockets[projectId], conn)
+	webSockets_proj[conn] = append(webSockets_proj[conn], projectId)
 }
 
 func WebSocketDisconnected(conn *websocket.Conn) {
-	for p, v := range webSockets {
-		if v == conn {
-			copy(webSockets[p:], webSockets[p + 1:])
-			webSockets[len(webSockets) - 1] = nil // or the zero value of T
-			webSockets = webSockets[:len(webSockets) - 1]
+
+	for project := range webSockets_proj[conn] {
+		for i, v := range proj_webSockets[project] {
+			if v == conn {
+				copy(proj_webSockets[project][i:], proj_webSockets[project][i + 1:])
+				proj_webSockets[project][len(proj_webSockets[project]) - 1] = nil // or the zero value of T
+				proj_webSockets[project] = proj_webSockets[project][:len(proj_webSockets[project]) - 1]
+				if len(proj_webSockets[project]) {
+					delete(proj_webSockets, project)
+				}
+			}
 		}
 	}
+
+	delete(webSockets_proj, conn)
+
 }
 
-func NotifyAll(projectId string, notification *baseModels.WSNotification) {
+func NotifyProjectClients(projectId string, notification *baseModels.WSNotification) {
 	// Notify all connected clients
-	// TODO: Change to use RabbitMQ or Redis
-	for _, v := range webSockets {
+//	TODO: Change to use RabbitMQ or Redis
+
+	for v := range proj_webSockets[projectId]{
 		SendWebSocketMessage(v, notification)
 	}
 }
 
 func SendWebSocketMessage(conn *websocket.Conn, message interface{}) error {
-
 	respBytes, err := json.Marshal(message)
 	log.Println(string(respBytes[:]))
 
