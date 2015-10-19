@@ -10,6 +10,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 )
 
 type File struct {
@@ -66,6 +67,12 @@ func CreateFile(fileCreateRequest fileRequests.FileCreateRequest) baseModels.WSR
 	}
 
 	// Write file to disk
+
+	fileCreateRequest.RelativePath = filepath.Clean(fileCreateRequest.RelativePath)
+	if(fileCreateRequest.RelativePath[0:2] == ".." || filepath.IsAbs(fileCreateRequest.RelativePath)){
+		return baseModels.NewFailResponse(-308, fileCreateRequest.BaseRequest.Tag, nil)
+	}
+
 	err = os.MkdirAll("files/" + fileCreateRequest.ProjectId + "/" + fileCreateRequest.RelativePath, os.ModeExclusive)
 	if err != nil {
 		log.Println("Failed to create file directory:", err)

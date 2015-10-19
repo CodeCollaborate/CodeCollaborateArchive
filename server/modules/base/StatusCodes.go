@@ -35,6 +35,7 @@ var StatusCodes = map[int]string{
 	-305: "Error creating File: Duplicate File",
 	-306: "Error renaming File: Duplicate File",
 	-307: "Error moving File: Duplicate File",
+	-308: "Error creating File: Invalid File Path",
 
 	// 400s - Change Errors
 	-400: "Error inserting Change: Internal Error",
