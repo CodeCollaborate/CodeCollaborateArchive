@@ -255,14 +255,13 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 					case "UserSubscribeRequest":
 
-						var userSubscribeRequest = userRequests.UserSubscribeRequest
-						if err := json.Unmarshal(message, &userLoginRequest); err != nil {
+						var userSubscribeRequest userRequests.UserSubscribeRequest
+						if err := json.Unmarshal(message, &userSubscribeRequest); err != nil {
 							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
 							break
 						}
 						userSubscribeRequest.BaseRequest = baseRequestObj
 						response = userModels.Subscribe(userSubscribeRequest, wsConn)
-
 
 					//TODO: maybe delete?
 

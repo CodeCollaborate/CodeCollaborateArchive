@@ -18,7 +18,7 @@ Permissions for users:
 
 Admins and above can grant/revoke permissions for anyone at the same, or a lower permission level.
 
-Accepts wildcard flag for Username: "*"
+TODO: Accepts wildcard flag for Username: "*"
 */
 type Project struct {
 	Id          string         `bson:"_id"` // ID of object
@@ -27,6 +27,7 @@ type Project struct {
 	Permissions map[string]int // Array of references to User objects
 
 	//TODO: Add project versions, incremented on file creation, deletion, checked on ws connect
+	//TODO: wildcard permissions, add once we make adding to projects a thing
 }
 
 // Create new project

@@ -12,6 +12,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/models"
 	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/requests"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/project/models"
 )
 
 type User struct {
@@ -108,9 +109,23 @@ func LoginUser(loginRequest userRequests.UserLoginRequest) baseModels.WSResponse
 func Subscribe(subscriptionRequest userRequests.UserSubscribeRequest, wsConn *websocket.Conn) baseModels.WSResponse {
 
 	toSubscribe := subscriptionRequest.Projects
-	for v := range toSubscribe {
-		managers.WebSocketAddProject(v, wsConn)
+	for _, project := range toSubscribe {
+		proj, err := projectModels.GetProjectById(project)
+
+		if err != nil {
+			return baseModels.NewFailResponse(-200, subscriptionRequest.BaseRequest.Tag, nil)
+		}
+
+		for key, _ := range proj.Permissions {
+			if key == subscriptionRequest.BaseRequest.UserId {
+				if(!managers.WebSocketSubscribeProject(wsConn, project)){
+					return baseModels.NewFailResponse(-206 , subscriptionRequest.BaseRequest.Tag, nil)
+				}
+			}
+
+		}
 	}
+
 	return baseModels.NewSuccessResponse(subscriptionRequest.BaseRequest.Tag, nil)
 }
 
