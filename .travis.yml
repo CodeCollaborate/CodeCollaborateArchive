@@ -1,6 +1,12 @@
 language: go
 go:
 - 1.5.1
+branches:
+  only:
+  - master
+  - stable
+  - release
+  - /v\d+\.\d+\.\d+.*/
 install:
 - "./install-dependencies.sh"
 script:
