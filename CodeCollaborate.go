@@ -253,7 +253,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						//Check username/pw, login if needed.
 						response = userModels.LoginUser(userLoginRequest)
 
-					case "UserSubscribeRequest":
+					case "Subscribe":
 
 						var userSubscribeRequest userRequests.UserSubscribeRequest
 						if err := json.Unmarshal(message, &userSubscribeRequest); err != nil {
