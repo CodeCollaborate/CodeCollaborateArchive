@@ -25,6 +25,7 @@ var StatusCodes = map[int]string{
 	-204: "Error revoking permissions: Internal Error",
 	-205: "Error revoking permissions: Must have an owner",
 	-206: "Error subscribing to project",
+	-207: "Error modifying permissions: You do not have admin privileges",
 
 	// 300s - File Errors
 	-300: "No such file found",
