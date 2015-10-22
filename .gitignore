@@ -16,5 +16,15 @@ hs_err_pid*
 *.iml
 
 *.ignore
-~$* # Microsoft Office temp files
 files/*
+
+# Microsoft Office temp files
+*.tmp
+# Word temporary
+~$*.doc*
+# Excel temporary
+~$*.xls*
+# Excel Backup File
+*.xlk
+# PowerPoint temporary
+~$*.ppt*
