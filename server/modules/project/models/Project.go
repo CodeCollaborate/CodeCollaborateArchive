@@ -174,7 +174,7 @@ func GetProjectById(id string) (*Project, error) {
 }
 
 func CheckUserHasPermissions( project *Project, userId string, permissionsLevel int) bool{
-	if(project[userId] >= permissionsLevel){
+	if(project.Permissions[userId] >= permissionsLevel){
 		return true;
 	}
 	return false;
