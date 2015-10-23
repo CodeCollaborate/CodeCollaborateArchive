@@ -75,7 +75,7 @@ func InsertChange(fileChangeRequest fileRequests.FileChangeRequest) baseModels.W
 
 	managers.NotifyProjectClients(file.Project, fileChangeRequest.GetNotification(fileChangeRequest.FileVersion))
 
-	return baseModels.NewSuccessResponse(fileChangeRequest.BaseRequest.Tag, nil)
+	return baseModels.NewSuccessResponse(fileChangeRequest.BaseRequest.Tag, map[string]interface{}{"FileVersion": fileChangeRequest.FileVersion})
 
 }
 
