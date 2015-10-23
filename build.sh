@@ -1,5 +1,4 @@
 #!/usr/bin/env sh
-git pull
 go build CodeCollaborate.go
 sudo cp -f etc/init.d/CodeCollaborate /etc/init.d/
 sudo mkdir -p /CodeCollaborate
