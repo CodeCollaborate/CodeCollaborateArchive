@@ -17,9 +17,8 @@ import (
 
 type User struct {
 	Id            string   `bson:"_id"` // ID of object
-	Username      string   // Username
 	Email         string   // Email of user
-	Password      string   `json:"-"` // Unhashed Password
+	Password      string   `json:"-",bson:"-"` // Unhashed Password
 	Password_Hash string   `json:"-"` // Hashed Password
 	Tokens        []string `json:"-"` // Token after logged in.
 }
@@ -36,7 +35,6 @@ func RegisterUser(registrationRequest userRequests.UserRegisterRequest) baseMode
 	// Create new UserAuthData object
 	userAuthData := new(User)
 	userAuthData.Id = managers.NewObjectIdString()
-	userAuthData.Username = registrationRequest.Username
 	userAuthData.Email = registrationRequest.Email
 	userAuthData.Password_Hash = string(pwHashBytes[:])
 
@@ -44,9 +42,9 @@ func RegisterUser(registrationRequest userRequests.UserRegisterRequest) baseMode
 	session, collection := managers.GetMGoCollection("Users")
 	defer session.Close()
 
-	// Make sure username is unique
+	// Make sure email is unique
 	index := mgo.Index{
-		Key:        []string{"username"},
+		Key:        []string{"email"},
 		Unique:     true,
 		DropDups:   true,
 		Background: true,
@@ -54,7 +52,7 @@ func RegisterUser(registrationRequest userRequests.UserRegisterRequest) baseMode
 	}
 	err = collection.EnsureIndex(index)
 	if err != nil {
-		log.Println("Failed to ensure username index:", err)
+		log.Println("Failed to ensure email index:", err)
 		return baseModels.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil)
 	}
 
@@ -79,7 +77,7 @@ func LoginUser(loginRequest userRequests.UserLoginRequest) baseModels.WSResponse
 	defer session.Close()
 
 	user := User{}
-	if err := collection.Find(bson.M{"$or": []interface{}{bson.M{"username": loginRequest.UsernameOREmail}, bson.M{"email": loginRequest.UsernameOREmail}}}).One(&user); err != nil {
+	if err := collection.Find(bson.M{"email": loginRequest.Email}).One(&user); err != nil {
 		// Could not find user
 		return baseModels.NewFailResponse(-104, loginRequest.BaseRequest.Tag, nil)
 	}
@@ -89,7 +87,7 @@ func LoginUser(loginRequest userRequests.UserLoginRequest) baseModels.WSResponse
 		return baseModels.NewFailResponse(-104, loginRequest.BaseRequest.Tag, nil)
 	}
 
-	tokenBytes, err := bcrypt.GenerateFromPassword([]byte(loginRequest.UsernameOREmail+time.Now().String()), bcrypt.DefaultCost)
+	tokenBytes, err := bcrypt.GenerateFromPassword([]byte(loginRequest.Email +time.Now().String()), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Failed to generate token:", err)
 		return baseModels.NewFailResponse(-103, loginRequest.BaseRequest.Tag, nil)
@@ -155,7 +153,7 @@ func CheckUserAuth(baseRequest baseRequests.BaseRequest) bool {
 func addToken(collection *mgo.Collection, userAuthData User, token string) error {
 	userAuthData.Tokens = append(userAuthData.Tokens, token)
 
-	return collection.Update(bson.M{"username": userAuthData.Username}, bson.M{"$set": bson.M{"tokens": userAuthData.Tokens}})
+	return collection.Update(bson.M{"email": userAuthData.Email}, bson.M{"$set": bson.M{"tokens": userAuthData.Tokens}})
 }
 
 func GetUserById(id string) (*User, error) {

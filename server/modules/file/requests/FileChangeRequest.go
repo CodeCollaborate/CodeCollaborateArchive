@@ -8,7 +8,7 @@ import (
 type FileChangeRequest struct {
 	BaseRequest baseRequests.BaseRequest // Add, Update, Remove
 	FileVersion int                      // Version of file to be updated
-	Changes     string                   // Client-Computed changes (patch).
+	Change     string                   // Client-Computed changes (patch).
 }
 
 func (message *FileChangeRequest) GetNotification(fileVersion int) *baseModels.WSNotification {
@@ -17,7 +17,7 @@ func (message *FileChangeRequest) GetNotification(fileVersion int) *baseModels.W
 	notification.Resource = message.BaseRequest.Resource
 	notification.ResId = message.BaseRequest.ResId
 	notification.Data = map[string]interface{}{
-		"Changes": message.Changes,
+		"Changes": message.Change,
 		"FileVersion": fileVersion,
 	}
 	return notification

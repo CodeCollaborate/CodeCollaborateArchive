@@ -36,7 +36,7 @@ func InsertChange(fileChangeRequest fileRequests.FileChangeRequest) baseModels.W
 
 	fileChange := new(FileChange)
 	fileChange.Id = managers.NewObjectIdString()
-	fileChange.Changes = fileChangeRequest.Changes
+	fileChange.Changes = fileChangeRequest.Change
 	fileChange.File = fileChangeRequest.BaseRequest.ResId
 	fileChange.Version = fileChangeRequest.FileVersion
 	fileChange.User = fileChangeRequest.BaseRequest.UserId
