@@ -23,16 +23,16 @@ TODO: Accepts wildcard flag for Username: "*"
 */
 type Project struct {
 	Id          string         `bson:"_id"` // ID of object
-	Name        string         // Name of project
-	ServerPath  string         // Path on server
-	Permissions map[string]int // Array of references to User objects
+	Name        string                      // Name of project
+	ServerPath  string                      // Path on server
+	Permissions map[string]int              // Array of references to User objects
 
-	//TODO: Add project versions, incremented on file creation, deletion, checked on ws connect
-	//TODO: wildcard permissions, add once we make adding to projects a thing
+											//TODO: Add project versions, incremented on file creation, deletion, checked on ws connect
+											//TODO: wildcard permissions, add once we make adding to projects a thing
 }
 
 // Create new project
-func CreateProject(wsConn *websocket.Conn, projectCreateRequest projectRequests.ProjectCreateRequest){
+func CreateProject(wsConn *websocket.Conn, projectCreateRequest projectRequests.ProjectCreateRequest) {
 
 	// Create new Project object
 	project := new(Project)
@@ -55,7 +55,7 @@ func CreateProject(wsConn *websocket.Conn, projectCreateRequest projectRequests.
 }
 
 // Rename project (?)
-func RenameProject(wsConn *websocket.Conn, projectRenameRequest projectRequests.ProjectRenameRequest){
+func RenameProject(wsConn *websocket.Conn, projectRenameRequest projectRequests.ProjectRenameRequest) {
 
 	// Get new DB connection
 	session, collection := managers.GetMGoCollection("Projects")
@@ -74,15 +74,15 @@ func RenameProject(wsConn *websocket.Conn, projectRenameRequest projectRequests.
 // Grant permission <Level> to <User>
 //  - Check if user exists
 //  - Grants permission level to user, overwriting if necessary.
-func GrantProjectPermissions(wsConn *websocket.Conn, projectGrantPermissionsRequest projectRequests.ProjectGrantPermissionsRequest){
+func GrantProjectPermissions(wsConn *websocket.Conn, projectGrantPermissionsRequest projectRequests.ProjectGrantPermissionsRequest) {
 
 	project, err := GetProjectById(projectGrantPermissionsRequest.BaseRequest.ResId)
 	if err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-200, projectGrantPermissionsRequest.BaseRequest.Tag, nil))
 	}
 
-	if(!CheckUserHasPermissions(project, projectGrantPermissionsRequest.BaseRequest.UserId, 5)){
-		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-207, projectGrantPermissionsRequest.BaseRequest.Tag, nil ))
+	if (!CheckUserHasPermissions(project, projectGrantPermissionsRequest.BaseRequest.UserId, 5)) {
+		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-207, projectGrantPermissionsRequest.BaseRequest.Tag, nil))
 	}
 
 	// Make sure that there is still an owner of the project.
@@ -115,15 +115,15 @@ func GrantProjectPermissions(wsConn *websocket.Conn, projectGrantPermissionsRequ
 // Revoke permission for <User>
 //  - Check if user has permissions
 //  - Revokes permissions entirely; removes entry.
-func RevokeProjectPermissions(wsConn *websocket.Conn, projectRevokePermissionsRequest projectRequests.ProjectRevokePermissionsRequest){
+func RevokeProjectPermissions(wsConn *websocket.Conn, projectRevokePermissionsRequest projectRequests.ProjectRevokePermissionsRequest) {
 
 	project, err := GetProjectById(projectRevokePermissionsRequest.BaseRequest.ResId)
 	if err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-200, projectRevokePermissionsRequest.BaseRequest.Tag, nil))
 	}
 
-	if(!CheckUserHasPermissions(project, projectRevokePermissionsRequest.BaseRequest.UserId, 5)){
-		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-207, projectRevokePermissionsRequest.BaseRequest.Tag, nil ))
+	if (!CheckUserHasPermissions(project, projectRevokePermissionsRequest.BaseRequest.UserId, 5)) {
+		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-207, projectRevokePermissionsRequest.BaseRequest.Tag, nil))
 	}
 
 	// Make sure that there is still an owner of the project.
@@ -171,8 +171,8 @@ func GetProjectById(id string) (*Project, error) {
 	return result, nil
 }
 
-func CheckUserHasPermissions( project *Project, userId string, permissionsLevel int) bool{
-	if(project.Permissions[userId] >= permissionsLevel){
+func CheckUserHasPermissions(project *Project, userId string, permissionsLevel int) bool {
+	if (project.Permissions[userId] >= permissionsLevel) {
 		return true;
 	}
 	return false;

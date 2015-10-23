@@ -39,9 +39,9 @@ func WebSocketDisconnected(conn *websocket.Conn) {
 
 func NotifyProjectClients(projectId string, notification *baseModels.WSNotification) {
 	// Notify all connected clients
-//	TODO: Change to use RabbitMQ or Redis
+	//	TODO: Change to use RabbitMQ or Redis
 
-	for _, v := range proj_webSockets[projectId]{
+	for _, v := range proj_webSockets[projectId] {
 		SendWebSocketMessage(v, notification)
 	}
 }

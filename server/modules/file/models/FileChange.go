@@ -21,7 +21,7 @@ type FileChange struct {
 	Date    time.Time              // Date/Time change was made
 }
 
-func InsertChange(wsConn *websocket.Conn, fileChangeRequest fileRequests.FileChangeRequest){
+func InsertChange(wsConn *websocket.Conn, fileChangeRequest fileRequests.FileChangeRequest) {
 
 	// Check that file exists
 	file, err := GetFileById(fileChangeRequest.BaseRequest.ResId);

@@ -16,14 +16,14 @@ import (
 )
 
 type User struct {
-	Id            string   `bson:"_id"` // ID of object
-	Email         string   // Email of user
+	Id            string   `bson:"_id"`        // ID of object
+	Email         string                       // Email of user
 	Password      string   `json:"-",bson:"-"` // Unhashed Password
-	Password_Hash string   `json:"-"` // Hashed Password
-	Tokens        []string `json:"-"` // Token after logged in.
+	Password_Hash string   `json:"-"`          // Hashed Password
+	Tokens        []string `json:"-"`          // Token after logged in.
 }
 
-func RegisterUser(wsConn *websocket.Conn, registrationRequest userRequests.UserRegisterRequest){
+func RegisterUser(wsConn *websocket.Conn, registrationRequest userRequests.UserRegisterRequest) {
 
 	// Hash password using bcrypt
 	pwHashBytes, err := bcrypt.GenerateFromPassword([]byte(registrationRequest.Password), bcrypt.DefaultCost)
@@ -70,7 +70,7 @@ func RegisterUser(wsConn *websocket.Conn, registrationRequest userRequests.UserR
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(registrationRequest.BaseRequest.Tag, nil))
 }
 
-func LoginUser(wsConn *websocket.Conn, loginRequest userRequests.UserLoginRequest){
+func LoginUser(wsConn *websocket.Conn, loginRequest userRequests.UserLoginRequest) {
 
 	// Get new DB connection
 	session, collection := managers.GetMGoCollection("Users")
@@ -87,7 +87,7 @@ func LoginUser(wsConn *websocket.Conn, loginRequest userRequests.UserLoginReques
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-104, loginRequest.BaseRequest.Tag, nil))
 	}
 
-	tokenBytes, err := bcrypt.GenerateFromPassword([]byte(loginRequest.Email +time.Now().String()), bcrypt.DefaultCost)
+	tokenBytes, err := bcrypt.GenerateFromPassword([]byte(loginRequest.Email + time.Now().String()), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Failed to generate token:", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-103, loginRequest.BaseRequest.Tag, nil))
@@ -104,7 +104,7 @@ func LoginUser(wsConn *websocket.Conn, loginRequest userRequests.UserLoginReques
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(loginRequest.BaseRequest.Tag, map[string]interface{}{"UserId": user.Id, "Token": token}))
 }
 
-func Subscribe(wsConn *websocket.Conn, subscriptionRequest userRequests.UserSubscribeRequest){
+func Subscribe(wsConn *websocket.Conn, subscriptionRequest userRequests.UserSubscribeRequest) {
 
 	toSubscribe := subscriptionRequest.Projects
 	for _, project := range toSubscribe {
@@ -116,8 +116,8 @@ func Subscribe(wsConn *websocket.Conn, subscriptionRequest userRequests.UserSubs
 
 		for key, _ := range proj.Permissions {
 			if key == subscriptionRequest.BaseRequest.UserId {
-				if(!managers.WebSocketSubscribeProject(wsConn, project)){
-					managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-206 , subscriptionRequest.BaseRequest.Tag, nil))
+				if (!managers.WebSocketSubscribeProject(wsConn, project)) {
+					managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-206, subscriptionRequest.BaseRequest.Tag, nil))
 				}
 			}
 

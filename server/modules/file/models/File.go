@@ -31,7 +31,7 @@ func (file File) getPath() string {
 	return file.filePath
 }
 
-func CreateFile(wsConn *websocket.Conn, fileCreateRequest fileRequests.FileCreateRequest){
+func CreateFile(wsConn *websocket.Conn, fileCreateRequest fileRequests.FileCreateRequest) {
 
 	file := new(File)
 	file.Id = managers.NewObjectIdString()
@@ -70,7 +70,7 @@ func CreateFile(wsConn *websocket.Conn, fileCreateRequest fileRequests.FileCreat
 	// Write file to disk
 
 	fileCreateRequest.RelativePath = filepath.Clean(fileCreateRequest.RelativePath)
-	if(fileCreateRequest.RelativePath[0:2] == ".." || filepath.IsAbs(fileCreateRequest.RelativePath)){
+	if (fileCreateRequest.RelativePath[0:2] == ".." || filepath.IsAbs(fileCreateRequest.RelativePath)) {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-308, fileCreateRequest.BaseRequest.Tag, nil))
 	}
 
@@ -89,7 +89,7 @@ func CreateFile(wsConn *websocket.Conn, fileCreateRequest fileRequests.FileCreat
 	managers.NotifyProjectClients(file.Project, fileCreateRequest.GetNotification(file.Id))
 }
 
-func RenameFile(wsConn *websocket.Conn, fileRenameRequest fileRequests.FileRenameRequest){
+func RenameFile(wsConn *websocket.Conn, fileRenameRequest fileRequests.FileRenameRequest) {
 	session, collection := managers.GetMGoCollection("Files")
 	defer session.Close()
 
@@ -114,7 +114,7 @@ func RenameFile(wsConn *websocket.Conn, fileRenameRequest fileRequests.FileRenam
 	managers.NotifyProjectClients(file.Project, fileRenameRequest.GetNotification())
 }
 
-func MoveFile(wsConn *websocket.Conn, fileMoveRequest fileRequests.FileMoveRequest){
+func MoveFile(wsConn *websocket.Conn, fileMoveRequest fileRequests.FileMoveRequest) {
 	session, collection := managers.GetMGoCollection("Files")
 	defer session.Close()
 
