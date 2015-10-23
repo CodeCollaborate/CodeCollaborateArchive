@@ -66,7 +66,7 @@ func RenameProject(projectRenameRequest projectRequests.ProjectRenameRequest) ba
 		return baseModels.NewFailResponse(-202, projectRenameRequest.BaseRequest.Tag, nil)
 	}
 
-	managers.NotifyProjectClients(projectRenameRequest.BaseRequest.ResId, projectRenameRequest.GetNotification())
+	defer managers.NotifyProjectClients(projectRenameRequest.BaseRequest.ResId, projectRenameRequest.GetNotification())
 
 	return baseModels.NewSuccessResponse(projectRenameRequest.BaseRequest.Tag, nil)
 }
@@ -108,7 +108,7 @@ func GrantProjectPermissions(projectGrantPermissionsRequest projectRequests.Proj
 		return baseModels.NewFailResponse(-202, projectGrantPermissionsRequest.BaseRequest.Tag, nil)
 	}
 
-	managers.NotifyProjectClients(projectGrantPermissionsRequest.BaseRequest.ResId, projectGrantPermissionsRequest.GetNotification())
+	defer managers.NotifyProjectClients(projectGrantPermissionsRequest.BaseRequest.ResId, projectGrantPermissionsRequest.GetNotification())
 
 	return baseModels.NewSuccessResponse(projectGrantPermissionsRequest.BaseRequest.Tag, nil)
 }
@@ -150,7 +150,7 @@ func RevokeProjectPermissions(projectRevokePermissionsRequest projectRequests.Pr
 		return baseModels.NewFailResponse(-202, projectRevokePermissionsRequest.BaseRequest.Tag, nil)
 	}
 
-	managers.NotifyProjectClients(projectRevokePermissionsRequest.BaseRequest.ResId, projectRevokePermissionsRequest.GetNotification())
+	defer managers.NotifyProjectClients(projectRevokePermissionsRequest.BaseRequest.ResId, projectRevokePermissionsRequest.GetNotification())
 
 	return baseModels.NewSuccessResponse(projectRevokePermissionsRequest.BaseRequest.Tag, nil)
 }

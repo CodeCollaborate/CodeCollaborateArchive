@@ -73,7 +73,7 @@ func InsertChange(fileChangeRequest fileRequests.FileChangeRequest) baseModels.W
 		return baseModels.NewFailResponse(-400, fileChangeRequest.BaseRequest.Tag, nil)
 	}
 
-	managers.NotifyProjectClients(file.Project, fileChangeRequest.GetNotification(fileChangeRequest.FileVersion))
+	defer managers.NotifyProjectClients(file.Project, fileChangeRequest.GetNotification(fileChangeRequest.FileVersion))
 
 	return baseModels.NewSuccessResponse(fileChangeRequest.BaseRequest.Tag, map[string]interface{}{"FileVersion": fileChangeRequest.FileVersion})
 
