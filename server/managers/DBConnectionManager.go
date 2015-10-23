@@ -16,7 +16,7 @@ func ConnectMGo() {
 	var err error
 	dbSession, err = mgo.Dial(DB_HOST + ":" + DB_PORT + "/" + DB_NAME)
 	if err != nil {
-		log.Println("Error connecting to MongoDB instance:", err)
+		log.Fatal("Error connecting to MongoDB instance: ", err)
 	}
 
 	dbSession.SetMode(mgo.Strong, true)

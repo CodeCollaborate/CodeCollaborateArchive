@@ -85,10 +85,8 @@ func CreateFile(wsConn *websocket.Conn, fileCreateRequest fileRequests.FileCreat
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil))
 	}
 
-	defer managers.NotifyProjectClients(file.Project, fileCreateRequest.GetNotification(file.Id))
-
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(fileCreateRequest.BaseRequest.Tag, map[string]interface{}{"FileId": file.Id}))
-
+	managers.NotifyProjectClients(file.Project, fileCreateRequest.GetNotification(file.Id))
 }
 
 func RenameFile(wsConn *websocket.Conn, fileRenameRequest fileRequests.FileRenameRequest){
@@ -112,9 +110,8 @@ func RenameFile(wsConn *websocket.Conn, fileRenameRequest fileRequests.FileRenam
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-302, fileRenameRequest.BaseRequest.Tag, nil))
 	}
 
-	defer managers.NotifyProjectClients(file.Project, fileRenameRequest.GetNotification())
-
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(fileRenameRequest.BaseRequest.Tag, nil))
+	managers.NotifyProjectClients(file.Project, fileRenameRequest.GetNotification())
 }
 
 func MoveFile(wsConn *websocket.Conn, fileMoveRequest fileRequests.FileMoveRequest){
@@ -138,9 +135,8 @@ func MoveFile(wsConn *websocket.Conn, fileMoveRequest fileRequests.FileMoveReque
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-303, fileMoveRequest.BaseRequest.Tag, nil))
 	}
 
-	defer managers.NotifyProjectClients(file.Project, fileMoveRequest.GetNotification())
-
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(fileMoveRequest.BaseRequest.Tag, nil))
+	managers.NotifyProjectClients(file.Project, fileMoveRequest.GetNotification())
 }
 
 func DeleteFile(wsConn *websocket.Conn, fileDeleteRequest fileRequests.FileDeleteRequest) {
@@ -160,9 +156,8 @@ func DeleteFile(wsConn *websocket.Conn, fileDeleteRequest fileRequests.FileDelet
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-304, fileDeleteRequest.BaseRequest.Tag, nil))
 	}
 
-	defer managers.NotifyProjectClients(file.Project, fileDeleteRequest.GetNotification())
-
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(fileDeleteRequest.BaseRequest.Tag, nil))
+	managers.NotifyProjectClients(file.Project, fileDeleteRequest.GetNotification())
 }
 
 func PullFile(wsConn *websocket.Conn, filePullRequest fileRequests.FilePullRequest) {

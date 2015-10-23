@@ -74,10 +74,8 @@ func InsertChange(wsConn *websocket.Conn, fileChangeRequest fileRequests.FileCha
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-400, fileChangeRequest.BaseRequest.Tag, nil))
 	}
 
-	defer managers.NotifyProjectClients(file.Project, fileChangeRequest.GetNotification(fileChangeRequest.FileVersion))
-
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(fileChangeRequest.BaseRequest.Tag, map[string]interface{}{"FileVersion": fileChangeRequest.FileVersion}))
-
+	managers.NotifyProjectClients(file.Project, fileChangeRequest.GetNotification(fileChangeRequest.FileVersion))
 }
 
 func GetChangeById(id string) (*FileChange, error) {
