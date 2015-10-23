@@ -9,6 +9,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/models"
+	"github.com/gorilla/websocket"
 )
 
 type FileChange struct {
@@ -20,17 +21,17 @@ type FileChange struct {
 	Date    time.Time              // Date/Time change was made
 }
 
-func InsertChange(fileChangeRequest fileRequests.FileChangeRequest) baseModels.WSResponse {
+func InsertChange(wsConn *websocket.Conn, fileChangeRequest fileRequests.FileChangeRequest){
 
 	// Check that file exists
 	file, err := GetFileById(fileChangeRequest.BaseRequest.ResId);
 	if err != nil {
-		return baseModels.NewFailResponse(-300, fileChangeRequest.BaseRequest.Tag, nil)
+		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-300, fileChangeRequest.BaseRequest.Tag, nil))
 	}
 
 	// Check that user is on latest version, then increment. Otherwise, throw error
 	if (fileChangeRequest.FileVersion < file.Version) {
-		return baseModels.NewFailResponse(-401, fileChangeRequest.BaseRequest.Tag, nil)
+		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-401, fileChangeRequest.BaseRequest.Tag, nil))
 	}
 	fileChangeRequest.FileVersion++
 
@@ -55,27 +56,27 @@ func InsertChange(fileChangeRequest fileRequests.FileChangeRequest) baseModels.W
 	err = changesCollection.EnsureIndex(index)
 	if err != nil {
 		log.Println("Failed to ensure changes index:", err)
-		return baseModels.NewFailResponse(-400, fileChangeRequest.BaseRequest.Tag, nil)
+		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-400, fileChangeRequest.BaseRequest.Tag, nil))
 	}
 
 	err = changesCollection.Insert(fileChange)
 	if err != nil {
 		if mgo.IsDup(err) {
-			return baseModels.NewFailResponse(-401, fileChangeRequest.BaseRequest.Tag, nil)
+			managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-401, fileChangeRequest.BaseRequest.Tag, nil))
 		}
-		return baseModels.NewFailResponse(-400, fileChangeRequest.BaseRequest.Tag, nil)
+		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-400, fileChangeRequest.BaseRequest.Tag, nil))
 	}
 
 	filesSession, filesCollection := managers.GetMGoCollection("Files")
 	defer filesSession.Close()
 	err = filesCollection.Update(bson.M{"_id": fileChangeRequest.BaseRequest.ResId}, bson.M{"$set": bson.M{"version": fileChangeRequest.FileVersion}})
 	if err != nil {
-		return baseModels.NewFailResponse(-400, fileChangeRequest.BaseRequest.Tag, nil)
+		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-400, fileChangeRequest.BaseRequest.Tag, nil))
 	}
 
 	defer managers.NotifyProjectClients(file.Project, fileChangeRequest.GetNotification(fileChangeRequest.FileVersion))
 
-	return baseModels.NewSuccessResponse(fileChangeRequest.BaseRequest.Tag, map[string]interface{}{"FileVersion": fileChangeRequest.FileVersion})
+	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(fileChangeRequest.BaseRequest.Tag, map[string]interface{}{"FileVersion": fileChangeRequest.FileVersion}))
 
 }
 

@@ -54,10 +54,8 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 	for {
 		// messageType, message, err := wsConn.ReadMessage()
 		_, message, err := wsConn.ReadMessage()
-
-		var response = baseModels.NewFailResponse(-0, 0, nil)
 		if err != nil {
-			log.Println("Error reading from WebSocket:", err)
+			managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(0, 0, nil))
 			break
 		}
 
@@ -65,11 +63,11 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 		var baseRequestObj baseRequests.BaseRequest
 		if err := json.Unmarshal(message, &baseRequestObj); err != nil {
 
-			response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, map[string]interface{}{"Error:": err})
+			managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, map[string]interface{}{"Error:": err}))
 
 		} else {
 			if !("User" == baseRequestObj.Resource && ("Register" == baseRequestObj.Action || "Login" == baseRequestObj.Action)) && !userModels.CheckUserAuth(baseRequestObj) {
-				response = baseModels.NewFailResponse(-105, baseRequestObj.Tag, nil)
+				managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-105, baseRequestObj.Tag, nil))
 			} else {
 
 				switch baseRequestObj.Resource {
@@ -81,12 +79,12 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Deserialize from JSON
 						var projectCreateRequest projectRequests.ProjectCreateRequest
 						if err := json.Unmarshal(message, &projectCreateRequest); err != nil {
-							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
 							break
 						}
 						// Add BaseRequest reference
 						projectCreateRequest.BaseRequest = baseRequestObj
-						response = projectModels.CreateProject(projectCreateRequest)
+						projectModels.CreateProject(wsConn, projectCreateRequest)
 
 					case "Rename":
 
@@ -94,12 +92,12 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Deserialize from JSON
 						var projectRenameRequest projectRequests.ProjectRenameRequest
 						if err := json.Unmarshal(message, &projectRenameRequest); err != nil {
-							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
 							break
 						}
 						// Add BaseRequest reference
 						projectRenameRequest.BaseRequest = baseRequestObj
-						response = projectModels.RenameProject(projectRenameRequest)
+						projectModels.RenameProject(wsConn, projectRenameRequest)
 
 					case "GrantPermissions":
 
@@ -107,14 +105,13 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Deserialize from JSON
 						var projectGrantPermissionsRequest projectRequests.ProjectGrantPermissionsRequest
 						if err := json.Unmarshal(message, &projectGrantPermissionsRequest); err != nil {
-
-							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
 							break
 						}
 						// Add BaseRequest reference
 						projectGrantPermissionsRequest.BaseRequest = baseRequestObj
 
-						response = projectModels.GrantProjectPermissions(projectGrantPermissionsRequest)
+						projectModels.GrantProjectPermissions(wsConn, projectGrantPermissionsRequest)
 
 					case "RevokePermissions":
 
@@ -122,20 +119,19 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Deserialize from JSON
 						var projectRevokePermissionsRequest projectRequests.ProjectRevokePermissionsRequest
 						if err := json.Unmarshal(message, &projectRevokePermissionsRequest); err != nil {
-
-							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
 							break
 						}
 						// Add BaseRequest reference
 						projectRevokePermissionsRequest.BaseRequest = baseRequestObj
 
-						response = projectModels.RevokeProjectPermissions(projectRevokePermissionsRequest)
+						projectModels.RevokeProjectPermissions(wsConn, projectRevokePermissionsRequest)
 
 					case "Delete":
 					// TODO
 
 					default:
-						response = baseModels.NewFailResponse(-3, baseRequestObj.Tag, nil)
+						managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-3, baseRequestObj.Tag, nil))
 						break
 					}
 				case "File":
@@ -147,80 +143,80 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Deserialize from JSON
 						var fileCreateRequest fileRequests.FileCreateRequest
 						if err := json.Unmarshal(message, &fileCreateRequest); err != nil {
-							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
 							break
 						}
 						// Add BaseRequest reference
 						fileCreateRequest.BaseRequest = baseRequestObj
-						response = fileModels.CreateFile(fileCreateRequest)
+						fileModels.CreateFile(wsConn, fileCreateRequest)
 
 					case "Rename":
 						// {"Resource":"File", "Action":"Rename", "ResId":"561987a84357413b14000006", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "NewName":"foo2"}
 						// Deserialize from JSON
 						var fileRenameRequest fileRequests.FileRenameRequest
 						if err := json.Unmarshal(message, &fileRenameRequest); err != nil {
-							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
 							break
 						}
 						// Add BaseRequest reference
 						fileRenameRequest.BaseRequest = baseRequestObj
-						response = fileModels.RenameFile(fileRenameRequest)
+						fileModels.RenameFile(wsConn, fileRenameRequest)
 
 					case "Move":
 						// {"Resource":"File", "Action":"Move", "ResId":"561987a84357413b14000006", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "NewPath":"test/path2/"}
 						// Deserialize from JSON
 						var fileMoveRequest fileRequests.FileMoveRequest
 						if err := json.Unmarshal(message, &fileMoveRequest); err != nil {
-							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
 							break
 						}
 						// Add BaseRequest reference
 						fileMoveRequest.BaseRequest = baseRequestObj
-						response = fileModels.MoveFile(fileMoveRequest)
+						fileModels.MoveFile(wsConn, fileMoveRequest)
 
 					case "Delete":
 						// {"Resource":"File", "Action":"Delete", "ResId":"561987a84357413b14000006", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e"}
 						// Deserialize from JSON
 						var fileDeleteRequest fileRequests.FileDeleteRequest
 						if err := json.Unmarshal(message, &fileDeleteRequest); err != nil {
-							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
 							break
 						}
 						// Add BaseRequest reference
 						fileDeleteRequest.BaseRequest = baseRequestObj
-						response = fileModels.DeleteFile(fileDeleteRequest)
+						fileModels.DeleteFile(wsConn, fileDeleteRequest)
 
 					case "Change":
 						// {"Tag": 112, "Action": "Change", "Resource": "File", "ResId": "561987a84357413b14000006", "FileVersion":0, "Changes": "@@ -40,16 +40,17 @@\n almost i\n+t\n n shape", "UserId": "561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e"}
 						// Deserialize from JSON
 						var fileChangeRequest fileRequests.FileChangeRequest
 						if err := json.Unmarshal(message, &fileChangeRequest); err != nil {
-							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
 							break
 						}
 						// Add BaseRequest reference
 						fileChangeRequest.BaseRequest = baseRequestObj
 
-						response = fileModels.InsertChange(fileChangeRequest)
+						fileModels.InsertChange(wsConn, fileChangeRequest)
 
 					case "Pull":
 						var filePullRequest fileRequests.FilePullRequest
 						if err := json.Unmarshal(message, &filePullRequest); err != nil {
-							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
 							break
 						}
 						// Add BaseRequest reference
 						filePullRequest.BaseRequest = baseRequestObj
 
-						response = fileModels.PullFile(filePullRequest)
+						fileModels.PullFile(wsConn, filePullRequest)
 
 					default:
-						response = baseModels.NewFailResponse(-3, baseRequestObj.Tag, map[string]interface{}{"Action": baseRequestObj.Action})
+						baseModels.NewFailResponse(-3, baseRequestObj.Tag, map[string]interface{}{"Action": baseRequestObj.Action})
 						break
 					}
 
 				// // Notify success; return new version number.
-				// response = base.NewSuccessResponse(baseRequestObj.Tag, nil)
+				// base.NewSuccessResponse(baseRequestObj.Tag, nil)
 
 				case "User":
 					switch baseRequestObj.Action {
@@ -231,58 +227,53 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						var userRegisterRequest userRequests.UserRegisterRequest
 						if err := json.Unmarshal(message, &userRegisterRequest); err != nil {
 
-							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
 							break
 						}
 						// Add BaseRequest reference
 						userRegisterRequest.BaseRequest = baseRequestObj
 
-						response = userModels.RegisterUser(userRegisterRequest)
+						userModels.RegisterUser(wsConn, userRegisterRequest)
 					case "Login":
 
 						// {"Resource":"User", "Action":"Login", "UsernameOREmail":"abcd", "Password":"abcd1234"}
 						// Deserialize from JSON
 						var userLoginRequest userRequests.UserLoginRequest
 						if err := json.Unmarshal(message, &userLoginRequest); err != nil {
-							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
 							break
 						}
 						// Add BaseRequest reference
 						userLoginRequest.BaseRequest = baseRequestObj
 
 						//Check username/pw, login if needed.
-						response = userModels.LoginUser(userLoginRequest)
+						userModels.LoginUser(wsConn, userLoginRequest)
 
 					case "Subscribe":
 
 						// {"Resource":"User", "Action":"Subscribe", "Projects":["5629a063111aeb63cf000001"], "UserId":"56297d8e111aeb5f53000001", "Token": "token-fahslaj"}
 						var userSubscribeRequest userRequests.UserSubscribeRequest
 						if err := json.Unmarshal(message, &userSubscribeRequest); err != nil {
-							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
 							break
 						}
 						userSubscribeRequest.BaseRequest = baseRequestObj
-						response = userModels.Subscribe(userSubscribeRequest, wsConn)
+						userModels.Subscribe(wsConn, userSubscribeRequest)
 
 					//TODO: maybe delete?
 
 					//TODO: Change PW
 
 					default:
-						response = baseModels.NewFailResponse(-3, baseRequestObj.Tag, nil)
+						managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-3, baseRequestObj.Tag, nil))
 						break
 					}
 				default:
 					// Invalid resource type
-					response = baseModels.NewFailResponse(-2, baseRequestObj.Tag, nil)
+					managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-2, baseRequestObj.Tag, nil))
 					break
 				}
 			}
-		}
-
-		err = managers.SendWebSocketMessage(wsConn, response)
-		if err != nil {
-			break
 		}
 	}
 }
