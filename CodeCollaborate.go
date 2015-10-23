@@ -77,7 +77,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 					switch baseRequestObj.Action {
 					case "Create":
 
-						// {"Resource":"Project", "Action":"Create", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "Name":"foo"}
+						// {"Resource":"Project", "Action":"Create", "UserId":"56297de7111aeb5f53000004", "Token": "$2a$10$kWgnc1TcG.KBaGH0cjY52OzWYt77XvkGRtOpim6ISD/W8avdujeTO", "Name":"foo"}
 						// Deserialize from JSON
 						var projectCreateRequest projectRequests.ProjectCreateRequest
 						if err := json.Unmarshal(message, &projectCreateRequest); err != nil {
@@ -255,6 +255,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 					case "Subscribe":
 
+						// {"Resource":"User", "Action":"Subscribe", "Projects":["5629a063111aeb63cf000001"], "UserId":"56297d8e111aeb5f53000001", "Token": "token-fahslaj"}
 						var userSubscribeRequest userRequests.UserSubscribeRequest
 						if err := json.Unmarshal(message, &userSubscribeRequest); err != nil {
 							response = baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil)
