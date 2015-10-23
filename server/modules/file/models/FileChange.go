@@ -27,11 +27,13 @@ func InsertChange(wsConn *websocket.Conn, fileChangeRequest fileRequests.FileCha
 	file, err := GetFileById(fileChangeRequest.BaseRequest.ResId);
 	if err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-300, fileChangeRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	// Check that user is on latest version, then increment. Otherwise, throw error
 	if (fileChangeRequest.FileVersion < file.Version) {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-401, fileChangeRequest.BaseRequest.Tag, nil))
+		return
 	}
 	fileChangeRequest.FileVersion++
 
@@ -63,8 +65,10 @@ func InsertChange(wsConn *websocket.Conn, fileChangeRequest fileRequests.FileCha
 	if err != nil {
 		if mgo.IsDup(err) {
 			managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-401, fileChangeRequest.BaseRequest.Tag, nil))
+			return
 		}
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-400, fileChangeRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	filesSession, filesCollection := managers.GetMGoCollection("Files")
@@ -72,6 +76,7 @@ func InsertChange(wsConn *websocket.Conn, fileChangeRequest fileRequests.FileCha
 	err = filesCollection.Update(bson.M{"_id": fileChangeRequest.BaseRequest.ResId}, bson.M{"$set": bson.M{"version": fileChangeRequest.FileVersion}})
 	if err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-400, fileChangeRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(fileChangeRequest.BaseRequest.Tag, map[string]interface{}{"FileVersion": fileChangeRequest.FileVersion}))

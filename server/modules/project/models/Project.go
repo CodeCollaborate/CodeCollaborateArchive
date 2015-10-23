@@ -49,6 +49,7 @@ func CreateProject(wsConn *websocket.Conn, projectCreateRequest projectRequests.
 	err := collection.Insert(project)
 	if err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-201, projectCreateRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(projectCreateRequest.BaseRequest.Tag, map[string]interface{}{"ProjectId": project.Id}))
@@ -65,6 +66,7 @@ func RenameProject(wsConn *websocket.Conn, projectRenameRequest projectRequests.
 	err := collection.Update(bson.M{"_id": projectRenameRequest.BaseRequest.ResId}, bson.M{"$set": bson.M{"name": projectRenameRequest.NewName}})
 	if err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-202, projectRenameRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(projectRenameRequest.BaseRequest.Tag, nil))
@@ -79,10 +81,12 @@ func GrantProjectPermissions(wsConn *websocket.Conn, projectGrantPermissionsRequ
 	project, err := GetProjectById(projectGrantPermissionsRequest.BaseRequest.ResId)
 	if err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-200, projectGrantPermissionsRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	if (!CheckUserHasPermissions(project, projectGrantPermissionsRequest.BaseRequest.UserId, 5)) {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-207, projectGrantPermissionsRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	// Make sure that there is still an owner of the project.
@@ -94,6 +98,7 @@ func GrantProjectPermissions(wsConn *websocket.Conn, projectGrantPermissionsRequ
 	}
 	if owner == "" {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-205, projectGrantPermissionsRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	project.Permissions[projectGrantPermissionsRequest.GrantUserId] = projectGrantPermissionsRequest.PermissionLevel
@@ -106,6 +111,7 @@ func GrantProjectPermissions(wsConn *websocket.Conn, projectGrantPermissionsRequ
 	err = collection.Update(bson.M{"_id": projectGrantPermissionsRequest.BaseRequest.ResId}, bson.M{"$set": bson.M{"permissions": project.Permissions}})
 	if err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-202, projectGrantPermissionsRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(projectGrantPermissionsRequest.BaseRequest.Tag, nil))
@@ -120,10 +126,12 @@ func RevokeProjectPermissions(wsConn *websocket.Conn, projectRevokePermissionsRe
 	project, err := GetProjectById(projectRevokePermissionsRequest.BaseRequest.ResId)
 	if err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-200, projectRevokePermissionsRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	if (!CheckUserHasPermissions(project, projectRevokePermissionsRequest.BaseRequest.UserId, 5)) {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-207, projectRevokePermissionsRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	// Make sure that there is still an owner of the project.
@@ -135,6 +143,7 @@ func RevokeProjectPermissions(wsConn *websocket.Conn, projectRevokePermissionsRe
 	}
 	if owner == "" {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-205, projectRevokePermissionsRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	delete(project.Permissions, projectRevokePermissionsRequest.RevokeUserId)
@@ -147,6 +156,7 @@ func RevokeProjectPermissions(wsConn *websocket.Conn, projectRevokePermissionsRe
 	err = collection.Update(bson.M{"_id": projectRevokePermissionsRequest.BaseRequest.ResId}, bson.M{"$set": bson.M{"permissions": project.Permissions}})
 	if err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-202, projectRevokePermissionsRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(projectRevokePermissionsRequest.BaseRequest.Tag, nil))

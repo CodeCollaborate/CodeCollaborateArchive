@@ -30,6 +30,7 @@ func RegisterUser(wsConn *websocket.Conn, registrationRequest userRequests.UserR
 	if err != nil {
 		log.Println("Failed to hash password:", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	// Create new UserAuthData object
@@ -54,6 +55,7 @@ func RegisterUser(wsConn *websocket.Conn, registrationRequest userRequests.UserR
 	if err != nil {
 		log.Println("Failed to ensure email index:", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	// Register new user
@@ -63,8 +65,10 @@ func RegisterUser(wsConn *websocket.Conn, registrationRequest userRequests.UserR
 		if mgo.IsDup(err) {
 			log.Println("Error registering user:", err)
 			managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-102, registrationRequest.BaseRequest.Tag, nil))
+			return
 		}
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(registrationRequest.BaseRequest.Tag, nil))
@@ -80,17 +84,20 @@ func LoginUser(wsConn *websocket.Conn, loginRequest userRequests.UserLoginReques
 	if err := collection.Find(bson.M{"email": loginRequest.Email}).One(&user); err != nil {
 		// Could not find user
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-104, loginRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password_Hash), []byte(loginRequest.Password)); err != nil {
 		// Password did not match.
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-104, loginRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	tokenBytes, err := bcrypt.GenerateFromPassword([]byte(loginRequest.Email + time.Now().String()), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Failed to generate token:", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-103, loginRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	token := string(tokenBytes[:])
@@ -99,6 +106,7 @@ func LoginUser(wsConn *websocket.Conn, loginRequest userRequests.UserLoginReques
 	if err != nil {
 		log.Println("Failed to save token:", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-103, loginRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(loginRequest.BaseRequest.Tag, map[string]interface{}{"UserId": user.Id, "Token": token}))
@@ -112,12 +120,14 @@ func Subscribe(wsConn *websocket.Conn, subscriptionRequest userRequests.UserSubs
 
 		if err != nil {
 			managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-200, subscriptionRequest.BaseRequest.Tag, nil))
+			return
 		}
 
 		for key, _ := range proj.Permissions {
 			if key == subscriptionRequest.BaseRequest.UserId {
 				if (!managers.WebSocketSubscribeProject(wsConn, project)) {
 					managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-206, subscriptionRequest.BaseRequest.Tag, nil))
+					return
 				}
 			}
 

@@ -55,6 +55,7 @@ func CreateFile(wsConn *websocket.Conn, fileCreateRequest fileRequests.FileCreat
 	if err != nil {
 		log.Println("Failed to ensure file name/path index:", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	// Insert file record
@@ -63,8 +64,10 @@ func CreateFile(wsConn *websocket.Conn, fileCreateRequest fileRequests.FileCreat
 		if mgo.IsDup(err) {
 			log.Println("Error creating file record:", err)
 			managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-305, fileCreateRequest.BaseRequest.Tag, nil))
+			return
 		}
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	// Write file to disk
@@ -72,17 +75,20 @@ func CreateFile(wsConn *websocket.Conn, fileCreateRequest fileRequests.FileCreat
 	fileCreateRequest.RelativePath = filepath.Clean(fileCreateRequest.RelativePath)
 	if (fileCreateRequest.RelativePath[0:2] == ".." || filepath.IsAbs(fileCreateRequest.RelativePath)) {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-308, fileCreateRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	err = os.MkdirAll("files/" + fileCreateRequest.ProjectId + "/" + fileCreateRequest.RelativePath, os.ModeExclusive)
 	if err != nil {
 		log.Println("Failed to create file directory:", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil))
+		return
 	}
 	err = ioutil.WriteFile(file.getPath(), fileCreateRequest.FileBytes, os.ModeExclusive)
 	if err != nil {
 		log.Println("Failed to write file:", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(fileCreateRequest.BaseRequest.Tag, map[string]interface{}{"FileId": file.Id}))
@@ -97,6 +103,7 @@ func RenameFile(wsConn *websocket.Conn, fileRenameRequest fileRequests.FileRenam
 	file, err := GetFileById(fileRenameRequest.BaseRequest.ResId);
 	if err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-300, fileRenameRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	file.Version++;
@@ -106,8 +113,10 @@ func RenameFile(wsConn *websocket.Conn, fileRenameRequest fileRequests.FileRenam
 		if mgo.IsDup(err) {
 			log.Println("Error registering user:", err)
 			managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-306, fileRenameRequest.BaseRequest.Tag, nil))
+			return
 		}
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-302, fileRenameRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(fileRenameRequest.BaseRequest.Tag, nil))
@@ -122,6 +131,7 @@ func MoveFile(wsConn *websocket.Conn, fileMoveRequest fileRequests.FileMoveReque
 	file, err := GetFileById(fileMoveRequest.BaseRequest.ResId);
 	if err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-300, fileMoveRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	file.Version++;
@@ -131,8 +141,10 @@ func MoveFile(wsConn *websocket.Conn, fileMoveRequest fileRequests.FileMoveReque
 		if mgo.IsDup(err) {
 			log.Println("Error registering user:", err)
 			managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-307, fileMoveRequest.BaseRequest.Tag, nil))
+			return
 		}
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-303, fileMoveRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(fileMoveRequest.BaseRequest.Tag, nil))
@@ -147,6 +159,7 @@ func DeleteFile(wsConn *websocket.Conn, fileDeleteRequest fileRequests.FileDelet
 	file, err := GetFileById(fileDeleteRequest.BaseRequest.ResId);
 	if err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-300, fileDeleteRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	err = os.Remove(file.getPath())
@@ -154,6 +167,7 @@ func DeleteFile(wsConn *websocket.Conn, fileDeleteRequest fileRequests.FileDelet
 	err = collection.Remove(bson.M{"_id": fileDeleteRequest.BaseRequest.ResId})
 	if err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-304, fileDeleteRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(fileDeleteRequest.BaseRequest.Tag, nil))
@@ -166,22 +180,26 @@ func PullFile(wsConn *websocket.Conn, filePullRequest fileRequests.FilePullReque
 	file, err := GetFileById(filePullRequest.BaseRequest.ResId);
 	if err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-300, filePullRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	// Read file from disk
 	if _, err := os.Stat(file.getPath()); os.IsNotExist(err) {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(filePullRequest.BaseRequest.Tag, map[string]interface{}{"FileBytes": "", "Changes": ""}))
+		return
 	}
 	fileBytes, err := ioutil.ReadFile(file.getPath())
 	if err != nil {
 		log.Println("Failed to read from file:", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-301, filePullRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	changes, err := GetChangesByFile(file.Id)
 	if err != nil {
 		log.Println("Failed to retrieve changes:", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-402, filePullRequest.BaseRequest.Tag, nil))
+		return
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(filePullRequest.BaseRequest.Tag, map[string]interface{}{"FileBytes": fileBytes, "Changes": changes}))
