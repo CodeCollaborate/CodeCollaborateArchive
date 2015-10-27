@@ -18,7 +18,6 @@ import (
 type User struct {
 	Id            string   `bson:"_id"`        // ID of object
 	Email         string                       // Email of user
-	Password      string   `json:"-",bson:"-"` // Unhashed Password
 	Password_Hash string   `json:"-"`          // Hashed Password
 	Tokens        []string `json:"-"`          // Token after logged in.
 }
