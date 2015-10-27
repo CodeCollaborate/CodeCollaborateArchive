@@ -11,13 +11,9 @@ type ProjectRevokePermissionsRequest struct {
 }
 
 func (message *ProjectRevokePermissionsRequest) GetNotification() *baseModels.WSNotification {
-	notification := new(baseModels.WSNotification)
-	notification.Action = message.BaseRequest.Action
-	notification.Resource = message.BaseRequest.Resource
-	notification.ResId = message.BaseRequest.ResId
-	notification.Data = map[string]interface{}{
+
+	data := map[string]interface{}{
 		"RevokeUserId": message.RevokeUserId,
 	}
-	return notification
+	return baseModels.NewNotification(message.BaseRequest, data)
 }
-

@@ -13,11 +13,10 @@ type FileCreateRequest struct {
 	FileBytes    []byte                   // Bytes of the file - binary
 }
 
-func (message *FileCreateRequest) GetNotification(resourceId string) *baseModels.WSNotification {
-	notification := new(baseModels.WSNotification)
-	notification.Action = message.BaseRequest.Action
-	notification.Resource = message.BaseRequest.Resource
-	notification.ResId = resourceId
-	notification.Data = nil
+func (message *FileCreateRequest) GetNotification(fileId string) *baseModels.WSNotification {
+
+	notification := baseModels.NewNotification(message.BaseRequest, nil)
+	notification.ResId = fileId;
+
 	return notification
 }

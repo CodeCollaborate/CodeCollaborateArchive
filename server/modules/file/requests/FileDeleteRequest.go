@@ -10,10 +10,6 @@ type FileDeleteRequest struct {
 }
 
 func (message *FileDeleteRequest) GetNotification() *baseModels.WSNotification {
-	notification := new(baseModels.WSNotification)
-	notification.Action = message.BaseRequest.Action
-	notification.Resource = message.BaseRequest.Resource
-	notification.ResId = message.BaseRequest.ResId
-	notification.Data = nil
-	return notification
+
+	return baseModels.NewNotification(message.BaseRequest, nil)
 }

@@ -18,7 +18,7 @@ type File struct {
 	Id           string `bson:"_id"`           // ID of object
 	Name         string                        // Name of file
 	RelativePath string `bson:"relative_path"` // Path of file
-	Version      int                           // File version
+	Version      int64                           // File version
 	Project      string                        // Reference to Project object
 	filePath     string `bson:"-",json:"-"`
 }

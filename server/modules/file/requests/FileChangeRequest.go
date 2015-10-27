@@ -7,20 +7,17 @@ import (
 
 type FileChangeRequest struct {
 	BaseRequest baseRequests.BaseRequest // Add, Update, Remove
-	FileVersion int                      // Version of file to be updated
+	FileVersion int64                      // Version of file to be updated
 	Changes     string                   // Client-Computed changes (patch).
 }
 
-func (message *FileChangeRequest) GetNotification(fileVersion int) *baseModels.WSNotification {
-	notification := new(baseModels.WSNotification)
-	notification.Action = message.BaseRequest.Action
-	notification.Resource = message.BaseRequest.Resource
-	notification.ResId = message.BaseRequest.ResId
-	notification.Data = map[string]interface{}{
+func (message *FileChangeRequest) GetNotification(fileVersion int64) *baseModels.WSNotification {
+
+	data := map[string]interface{}{
 		"Changes": message.Changes,
 		"FileVersion": fileVersion,
 	}
-	return notification
+	return baseModels.NewNotification(message.BaseRequest, data)
 }
 
 

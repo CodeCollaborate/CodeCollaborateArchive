@@ -15,7 +15,7 @@ import (
 type FileChange struct {
 	Id      string    `bson:"_id"` // ID of object
 	Changes string                 // Client-Computed changes (patch).
-	Version int                    // Version number
+	Version int64                    // Version number
 	File    string                 // id of file that was changed
 	User    string                 // id of user that made the change
 	Date    time.Time              // Date/Time change was made
