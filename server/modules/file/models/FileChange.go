@@ -17,7 +17,7 @@ type FileChange struct {
 	Changes string                 // Client-Computed changes (patch).
 	Version int64                    // Version number
 	File    string                 // id of file that was changed
-	User    string                 // id of user that made the change
+	User    string                 // id of user that made the change TODO: REFACTOR TO BE USERID
 	Date    time.Time              // Date/Time change was made
 }
 
