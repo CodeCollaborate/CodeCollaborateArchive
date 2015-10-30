@@ -80,7 +80,7 @@ func InsertChange(wsConn *websocket.Conn, fileChangeRequest fileRequests.FileCha
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(fileChangeRequest.BaseRequest.Tag, map[string]interface{}{"FileVersion": fileChangeRequest.FileVersion}))
-	managers.NotifyProjectClients(file.Project, fileChangeRequest.GetNotification(fileChangeRequest.FileVersion))
+	managers.NotifyProjectClients(file.Project, fileChangeRequest.GetNotification(fileChangeRequest.FileVersion), wsConn)
 }
 
 func GetChangeById(id string) (*FileChange, error) {

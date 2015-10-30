@@ -70,7 +70,7 @@ func RenameProject(wsConn *websocket.Conn, projectRenameRequest projectRequests.
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(projectRenameRequest.BaseRequest.Tag, nil))
-	managers.NotifyProjectClients(projectRenameRequest.BaseRequest.ResId, projectRenameRequest.GetNotification())
+	managers.NotifyProjectClients(projectRenameRequest.BaseRequest.ResId, projectRenameRequest.GetNotification(), wsConn)
 }
 
 // Grant permission <Level> to <User>
@@ -115,7 +115,7 @@ func GrantProjectPermissions(wsConn *websocket.Conn, projectGrantPermissionsRequ
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(projectGrantPermissionsRequest.BaseRequest.Tag, nil))
-	managers.NotifyProjectClients(projectGrantPermissionsRequest.BaseRequest.ResId, projectGrantPermissionsRequest.GetNotification())
+	managers.NotifyProjectClients(projectGrantPermissionsRequest.BaseRequest.ResId, projectGrantPermissionsRequest.GetNotification(), wsConn)
 }
 
 // Revoke permission for <User>
@@ -160,7 +160,7 @@ func RevokeProjectPermissions(wsConn *websocket.Conn, projectRevokePermissionsRe
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(projectRevokePermissionsRequest.BaseRequest.Tag, nil))
-	managers.NotifyProjectClients(projectRevokePermissionsRequest.BaseRequest.ResId, projectRevokePermissionsRequest.GetNotification())
+	managers.NotifyProjectClients(projectRevokePermissionsRequest.BaseRequest.ResId, projectRevokePermissionsRequest.GetNotification(), wsConn)
 }
 
 // Delete project (?)

@@ -92,7 +92,7 @@ func CreateFile(wsConn *websocket.Conn, fileCreateRequest fileRequests.FileCreat
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(fileCreateRequest.BaseRequest.Tag, map[string]interface{}{"FileId": file.Id}))
-	managers.NotifyProjectClients(file.Project, fileCreateRequest.GetNotification(file.Id))
+	managers.NotifyProjectClients(file.Project, fileCreateRequest.GetNotification(file.Id), wsConn)
 }
 
 func RenameFile(wsConn *websocket.Conn, fileRenameRequest fileRequests.FileRenameRequest) {
@@ -120,7 +120,7 @@ func RenameFile(wsConn *websocket.Conn, fileRenameRequest fileRequests.FileRenam
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(fileRenameRequest.BaseRequest.Tag, nil))
-	managers.NotifyProjectClients(file.Project, fileRenameRequest.GetNotification())
+	managers.NotifyProjectClients(file.Project, fileRenameRequest.GetNotification(), wsConn)
 }
 
 func MoveFile(wsConn *websocket.Conn, fileMoveRequest fileRequests.FileMoveRequest) {
@@ -148,7 +148,7 @@ func MoveFile(wsConn *websocket.Conn, fileMoveRequest fileRequests.FileMoveReque
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(fileMoveRequest.BaseRequest.Tag, nil))
-	managers.NotifyProjectClients(file.Project, fileMoveRequest.GetNotification())
+	managers.NotifyProjectClients(file.Project, fileMoveRequest.GetNotification(), wsConn)
 }
 
 func DeleteFile(wsConn *websocket.Conn, fileDeleteRequest fileRequests.FileDeleteRequest) {
@@ -171,7 +171,7 @@ func DeleteFile(wsConn *websocket.Conn, fileDeleteRequest fileRequests.FileDelet
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(fileDeleteRequest.BaseRequest.Tag, nil))
-	managers.NotifyProjectClients(file.Project, fileDeleteRequest.GetNotification())
+	managers.NotifyProjectClients(file.Project, fileDeleteRequest.GetNotification(), wsConn)
 }
 
 func PullFile(wsConn *websocket.Conn, filePullRequest fileRequests.FilePullRequest) {
