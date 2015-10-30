@@ -222,7 +222,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 					switch baseRequestObj.Action {
 					case "Register":
 
-						// {"Resource":"User", "Action":"Register", "Username":"abcd", "Email":"abcd@efgh.edu", "Password":"abcd1234"}
+						// {"Resource":"User", "Action":"Register", "Email":"abcd@efgh.edu", "Password":"abcd1234"}
 						// Deserialize from JSON
 						var userRegisterRequest userRequests.UserRegisterRequest
 						if err := json.Unmarshal(message, &userRegisterRequest); err != nil {
@@ -236,7 +236,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						userModels.RegisterUser(wsConn, userRegisterRequest)
 					case "Login":
 
-						// {"Resource":"User", "Action":"Login", "UsernameOREmail":"abcd", "Password":"abcd1234"}
+						// {"Resource":"User", "Action":"Login", "Email":"abcd@efgh.edu", "Password":"abcd1234"}
 						// Deserialize from JSON
 						var userLoginRequest userRequests.UserLoginRequest
 						if err := json.Unmarshal(message, &userLoginRequest); err != nil {
@@ -246,7 +246,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Add BaseRequest reference
 						userLoginRequest.BaseRequest = baseRequestObj
 
-						//Check username/pw, login if needed.
+						//Check email/pw, login if needed.
 						userModels.LoginUser(wsConn, userLoginRequest)
 
 					case "Subscribe":
@@ -257,8 +257,25 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
 							break
 						}
+						// Add BaseRequest reference
 						userSubscribeRequest.BaseRequest = baseRequestObj
+
+						//Check email/pw, login if needed.
 						userModels.Subscribe(wsConn, userSubscribeRequest)
+
+					case "Lookup":
+
+						// {"Resource":"User", "Action":"Lookup", "LookupEmail":"abcd@efgh.edu", "UserId":"56297d8e111aeb5f53000001", "Token": "token-fahslaj"}
+						var userLookupRequest userRequests.UserLookupRequest
+						if err := json.Unmarshal(message, &userLookupRequest); err != nil {
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
+							break
+						}
+						// Add BaseRequest reference
+						userLookupRequest.BaseRequest = baseRequestObj
+
+						//Check email/pw, login if needed.
+						userModels.LookupUser(wsConn, userLookupRequest)
 
 					//TODO: maybe delete?
 
