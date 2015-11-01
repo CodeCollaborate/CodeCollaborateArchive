@@ -8,7 +8,6 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.Block;
 
 
-import java.awt.*;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -92,7 +91,7 @@ public class Scrunching {
             Object[] applied = scrunch(patch, fileString);
             if (((boolean[]) applied[1])[0]) {
                 fileString = (String) applied[0];
-//                idsToRemove.add(key); TODO: undo
+                idsToRemove.add(key);
             } else {
                 System.out.println("Can't apply patch: " + key + " to file: " + filePath);
                 System.exit(1);
