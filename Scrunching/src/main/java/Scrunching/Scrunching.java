@@ -23,7 +23,7 @@ import java.util.List;
 
 public class Scrunching {
 
-    private static diff_match_patch differ;
+    private static DiffMatchPatch differ;
 
     public static void main(String[] args) {
         if (args.length < 1) {
@@ -31,7 +31,7 @@ public class Scrunching {
         }
         String fileId = args[0];
 
-        differ = new diff_match_patch();
+        differ = new DiffMatchPatch();
         differ.Diff_Timeout = 2.0f; // Ensure it won't fail from timing issue
 
         MongoClient mongoClient = new MongoClient();
@@ -144,13 +144,16 @@ public class Scrunching {
     }
 
     private static Object[] scrunch(String patch, String fileString){
-        List<diff_match_patch.Patch> patchList = null;
+        List<DiffMatchPatch.Patch> patchList = null;
+
         try {
             patchList = differ.patch_fromText(patch);
         } catch (IllegalArgumentException e) {
-            System.out.println(patch);
+            System.out.println("Unable to compile patch: \n" + patch);
+            System.exit(1);
         }
-        LinkedList<diff_match_patch.Patch> patchLinkedList = new LinkedList<diff_match_patch.Patch>(patchList);
+
+        LinkedList<DiffMatchPatch.Patch> patchLinkedList = new LinkedList<DiffMatchPatch.Patch>(patchList);
         return differ.patch_apply(patchLinkedList, fileString);
     }
 
