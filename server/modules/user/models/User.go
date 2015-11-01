@@ -129,11 +129,26 @@ func Subscribe(wsConn *websocket.Conn, subscriptionRequest userRequests.UserSubs
 					return
 				}
 			}
-
 		}
 	}
-
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(subscriptionRequest.BaseRequest.Tag, nil))
+}
+
+func LookupUser(wsConn *websocket.Conn, userLookupRequest userRequests.UserLookupRequest) {
+
+	// Get new DB connection
+	session, collection := managers.GetMGoCollection("Users")
+	defer session.Close()
+
+	user := User{}
+	if err := collection.Find(bson.M{"email": userLookupRequest.LookupEmail}).One(&user); err != nil {
+		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-100, userLookupRequest.BaseRequest.Tag, nil))
+		return;
+	}
+
+	data := map[string]interface{}{"UserId": user.Id}
+
+	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(userLookupRequest.BaseRequest.Tag, data))
 }
 
 func CheckUserAuth(baseRequest baseRequests.BaseRequest) bool {
