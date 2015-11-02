@@ -31,10 +31,10 @@ func WebSocketSubscribeProject(conn *websocket.Conn, username string, projectId 
 	}
 	log.Println(wsConn)
 
-	if(proj_wsConn[projectId] == nil){
+	if (proj_wsConn[projectId] == nil) {
 		proj_wsConn[projectId] = []*models.WSConnection{}
 	}
-	if(wsConn_proj[wsConn] == nil){
+	if (wsConn_proj[wsConn] == nil) {
 		wsConn_proj[wsConn] = []string{}
 	}
 
@@ -73,12 +73,14 @@ func WebSocketDisconnected(conn *websocket.Conn) {
 	delete(webSocket_wsConn, conn)
 }
 
-func NotifyProjectClients(projectId string, notification *baseModels.WSNotification) {
+func NotifyProjectClients(projectId string, notification *baseModels.WSNotification, wsConn *websocket.Conn) {
 	// Notify all connected clients
 	//	TODO: Change to use RabbitMQ or Redis
 
 	for _, value := range proj_wsConn[projectId] {
-		SendWebSocketMessage(value.WSConn, notification)
+		if (value != wsConn) {
+			SendWebSocketMessage(value, notification)
+		}
 	}
 }
 
