@@ -100,8 +100,8 @@ func LoginUser(wsConn *websocket.Conn, loginRequest userRequests.UserLoginReques
 	session, collection := managers.GetMGoCollection("Users")
 	defer session.Close()
 
-	user := User{}
-	if err := collection.Find(bson.M{"username": loginRequest.Username}).One(&user); err != nil {
+	user, err := GetUserByUsername(loginRequest.Username)
+	if err != nil {
 		// Could not find user
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-104, loginRequest.BaseRequest.Tag, nil))
 		return
@@ -196,8 +196,25 @@ func CheckUserAuth(baseRequest baseRequests.BaseRequest) bool {
 	return false
 }
 
-func addToken(collection *mgo.Collection, userAuthData User, token string) error {
+func addToken(collection *mgo.Collection, userAuthData *User, token string) error {
 	userAuthData.Tokens = append(userAuthData.Tokens, token)
 
 	return collection.Update(bson.M{"username": userAuthData.Username}, bson.M{"$set": bson.M{"tokens": userAuthData.Tokens}})
+}
+
+
+func GetUserByUsername(username string) (*User, error) {
+	// Get new DB connection
+	session, collection := managers.GetMGoCollection("Users")
+	defer session.Close()
+
+	result := new(User)
+	err := collection.Find(bson.M{"username": username}).One(&result)
+	if err != nil {
+		log.Println("Failed to retrieve User")
+		log.Println(err)
+		return nil, err
+	}
+
+	return result, nil
 }

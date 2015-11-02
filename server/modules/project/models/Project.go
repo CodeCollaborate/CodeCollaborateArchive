@@ -32,6 +32,11 @@ type Project struct {
 											//TODO: wildcard permissions, add once we make adding to projects a thing
 }
 
+func GetPermissionLevels (wsConn *websocket.Conn, projectGetPermissionLevelsRequest projectRequests.ProjectGetPermissionLevelsRequest) {
+
+	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(projectGetPermissionLevelsRequest.BaseRequest.Tag, map[string]interface{}{"PermissionLevels": PermissionLevels}))
+}
+
 // Create new project
 func CreateProject(wsConn *websocket.Conn, projectCreateRequest projectRequests.ProjectCreateRequest) {
 

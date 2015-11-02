@@ -12,7 +12,7 @@ var StatusCodes = map[int]string{
 	// 100s - User Errors
 	-100: "No such user found",
 	-101: "Error creating user: Internal Error",
-	-102: "Error creating user: Duplicate username",
+	-102: "Error creating user: Duplicate username or email",
 	-103: "Error logging in: Internal Error",
 	-104: "Error logging in: Invalid Username or Password",
 	-105: "Invalid Token",

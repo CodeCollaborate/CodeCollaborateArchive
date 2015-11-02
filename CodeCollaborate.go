@@ -73,6 +73,18 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 				switch baseRequestObj.Resource {
 				case "Project":
 					switch baseRequestObj.Action {
+					case "GetPermissionLevels":
+						// {"Resource":"Project", "Action":"GetPermissionLevels", "Username":"abcd", "Token": "test"}
+						// Deserialize from JSON
+						var projectGetPermissionLevelsRequest projectRequests.ProjectGetPermissionLevelsRequest
+						if err := json.Unmarshal(message, &projectGetPermissionLevelsRequest); err != nil {
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
+							break
+						}
+						// Add BaseRequest reference
+						projectGetPermissionLevelsRequest.BaseRequest = baseRequestObj
+						projectModels.GetPermissionLevels(wsConn, projectGetPermissionLevelsRequest)
+
 					case "Create":
 
 						// {"Resource":"Project", "Action":"Create", "Username":"abcd", "Token": "$2a$10$kWgnc1TcG.KBaGH0cjY52OzWYt77XvkGRtOpim6ISD/W8avdujeTO", "Name":"foo"}
