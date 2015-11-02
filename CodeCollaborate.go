@@ -75,7 +75,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 					switch baseRequestObj.Action {
 					case "Create":
 
-						// {"Resource":"Project", "Action":"Create", "UserId":"56297de7111aeb5f53000004", "Token": "$2a$10$kWgnc1TcG.KBaGH0cjY52OzWYt77XvkGRtOpim6ISD/W8avdujeTO", "Name":"foo"}
+						// {"Resource":"Project", "Action":"Create", "Username":"abcd", "Token": "$2a$10$kWgnc1TcG.KBaGH0cjY52OzWYt77XvkGRtOpim6ISD/W8avdujeTO", "Name":"foo"}
 						// Deserialize from JSON
 						var projectCreateRequest projectRequests.ProjectCreateRequest
 						if err := json.Unmarshal(message, &projectCreateRequest); err != nil {
@@ -88,7 +88,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 					case "Rename":
 
-						// {"Resource":"Project", "Action":"Rename", "ResId": "561987174357413b14000002", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "NewName":"bar"}
+						// {"Resource":"Project", "Action":"Rename", "ResId": "561987174357413b14000002", "Username":"abcd", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "NewName":"bar"}
 						// Deserialize from JSON
 						var projectRenameRequest projectRequests.ProjectRenameRequest
 						if err := json.Unmarshal(message, &projectRenameRequest); err != nil {
@@ -101,7 +101,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 					case "GrantPermissions":
 
-						// {"Resource":"Project", "Action":"GrantPermissions", "ResId": "561987174357413b14000002", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "GrantUserId":"561987434357413b14000003", "PermissionLevel":5}
+						// {"Resource":"Project", "Action":"GrantPermissions", "ResId": "561987174357413b14000002", "Username":"abcd", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "GrantUsername":"abcd", "PermissionLevel":5}
 						// Deserialize from JSON
 						var projectGrantPermissionsRequest projectRequests.ProjectGrantPermissionsRequest
 						if err := json.Unmarshal(message, &projectGrantPermissionsRequest); err != nil {
@@ -115,7 +115,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 					case "RevokePermissions":
 
-						// {"Resource":"Project", "Action":"RevokePermissions", "ResId": "561987174357413b14000002", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "RevokeUserId":"561987434357413b14000003"}
+						// {"Resource":"Project", "Action":"RevokePermissions", "ResId": "561987174357413b14000002", "Username":"abcd", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "RevokeUsername":"abcd"}
 						// Deserialize from JSON
 						var projectRevokePermissionsRequest projectRequests.ProjectRevokePermissionsRequest
 						if err := json.Unmarshal(message, &projectRevokePermissionsRequest); err != nil {
@@ -126,6 +126,34 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						projectRevokePermissionsRequest.BaseRequest = baseRequestObj
 
 						projectModels.RevokeProjectPermissions(wsConn, projectRevokePermissionsRequest)
+
+					case "GetSubscribedClients":
+
+						// {"Resource":"Project", "Action":"GetSubscribedClients", "ResId": "561987174357413b14000002", "Username":"abcd", "Token": "test"}
+						// Deserialize from JSON
+						var projectGetSubscribedClientsRequest projectRequests.ProjectGetSubscribedClientsRequest
+						if err := json.Unmarshal(message, &projectGetSubscribedClientsRequest); err != nil {
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
+							break
+						}
+						// Add BaseRequest reference
+						projectGetSubscribedClientsRequest.BaseRequest = baseRequestObj
+
+						managers.GetSubscribedClients(wsConn, projectGetSubscribedClientsRequest)
+
+					case "GetCollaborators":
+
+						// {"Resource":"Project", "Action":"GetCollaborators", "ResId": "561987174357413b14000002", "Username":"abcd", "Token": "test"}
+						// Deserialize from JSON
+						var ProjectGetCollaboratorsRequest projectRequests.ProjectGetCollaboratorsRequest
+						if err := json.Unmarshal(message, &ProjectGetCollaboratorsRequest); err != nil {
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
+							break
+						}
+						// Add BaseRequest reference
+						ProjectGetCollaboratorsRequest.BaseRequest = baseRequestObj
+
+						projectModels.GetCollaborators(wsConn, ProjectGetCollaboratorsRequest)
 
 					case "Delete":
 					// TODO
@@ -139,7 +167,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 					switch baseRequestObj.Action {
 
 					case "Create":
-						// {"Resource":"File", "Action":"Create", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "Name":"foo", "RelativePath":"test/path1/", "ProjectId":"561987174357413b14000002"}
+						// {"Resource":"File", "Action":"Create", "Username":"abcd", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "Name":"foo", "RelativePath":"test/path1/", "ProjectId":"561987174357413b14000002"}
 						// Deserialize from JSON
 						var fileCreateRequest fileRequests.FileCreateRequest
 						if err := json.Unmarshal(message, &fileCreateRequest); err != nil {
@@ -151,7 +179,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						fileModels.CreateFile(wsConn, fileCreateRequest)
 
 					case "Rename":
-						// {"Resource":"File", "Action":"Rename", "ResId":"561987a84357413b14000006", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "NewName":"foo2"}
+						// {"Resource":"File", "Action":"Rename", "ResId":"561987a84357413b14000006", "Username":"abcd", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "NewName":"foo2"}
 						// Deserialize from JSON
 						var fileRenameRequest fileRequests.FileRenameRequest
 						if err := json.Unmarshal(message, &fileRenameRequest); err != nil {
@@ -163,7 +191,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						fileModels.RenameFile(wsConn, fileRenameRequest)
 
 					case "Move":
-						// {"Resource":"File", "Action":"Move", "ResId":"561987a84357413b14000006", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "NewPath":"test/path2/"}
+						// {"Resource":"File", "Action":"Move", "ResId":"561987a84357413b14000006", "Username":"abcd", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e", "NewPath":"test/path2/"}
 						// Deserialize from JSON
 						var fileMoveRequest fileRequests.FileMoveRequest
 						if err := json.Unmarshal(message, &fileMoveRequest); err != nil {
@@ -175,7 +203,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						fileModels.MoveFile(wsConn, fileMoveRequest)
 
 					case "Delete":
-						// {"Resource":"File", "Action":"Delete", "ResId":"561987a84357413b14000006", "UserId":"561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e"}
+						// {"Resource":"File", "Action":"Delete", "ResId":"561987a84357413b14000006", "Username":"abcd", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e"}
 						// Deserialize from JSON
 						var fileDeleteRequest fileRequests.FileDeleteRequest
 						if err := json.Unmarshal(message, &fileDeleteRequest); err != nil {
@@ -187,7 +215,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						fileModels.DeleteFile(wsConn, fileDeleteRequest)
 
 					case "Change":
-						// {"Tag": 112, "Action": "Change", "Resource": "File", "ResId": "561987a84357413b14000006", "FileVersion":0, "Changes": "@@ -40,16 +40,17 @@\n almost i\n+t\n n shape", "UserId": "561986674357413b14000001", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e"}
+						// {"Tag": 112, "Action": "Change", "Resource": "File", "ResId": "561987a84357413b14000006", "FileVersion":0, "Changes": "@@ -40,16 +40,17 @@\n almost i\n+t\n n shape", "Username":"abcd", "Token": "$2a$10$gifm6Vrfn2vBBCX7qvaQzu.Pvttotyu1pRW5V6X7RnhYYiQCUHh4e"}
 						// Deserialize from JSON
 						var fileChangeRequest fileRequests.FileChangeRequest
 						if err := json.Unmarshal(message, &fileChangeRequest); err != nil {
@@ -222,7 +250,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 					switch baseRequestObj.Action {
 					case "Register":
 
-						// {"Resource":"User", "Action":"Register", "Email":"abcd@efgh.edu", "Password":"abcd1234"}
+						// {"Resource":"User", "Action":"Register", "Username":"abcd", "Password":"abcd1234"}
 						// Deserialize from JSON
 						var userRegisterRequest userRequests.UserRegisterRequest
 						if err := json.Unmarshal(message, &userRegisterRequest); err != nil {
@@ -236,7 +264,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						userModels.RegisterUser(wsConn, userRegisterRequest)
 					case "Login":
 
-						// {"Resource":"User", "Action":"Login", "Email":"abcd@efgh.edu", "Password":"abcd1234"}
+						// {"Resource":"User", "Action":"Login", "Username":"abcd", "Password":"abcd1234"}
 						// Deserialize from JSON
 						var userLoginRequest userRequests.UserLoginRequest
 						if err := json.Unmarshal(message, &userLoginRequest); err != nil {
@@ -246,12 +274,12 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Add BaseRequest reference
 						userLoginRequest.BaseRequest = baseRequestObj
 
-						//Check email/pw, login if needed.
+						//Check username/pw, login if needed.
 						userModels.LoginUser(wsConn, userLoginRequest)
 
 					case "Subscribe":
 
-						// {"Resource":"User", "Action":"Subscribe", "Projects":["5629a063111aeb63cf000001"], "UserId":"56297d8e111aeb5f53000001", "Token": "token-fahslaj"}
+						// {"Resource":"User", "Action":"Subscribe", "Projects":["5629a063111aeb63cf000001"], "Username":"abcd", "Token": "token-fahslaj"}
 						var userSubscribeRequest userRequests.UserSubscribeRequest
 						if err := json.Unmarshal(message, &userSubscribeRequest); err != nil {
 							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
@@ -260,12 +288,11 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Add BaseRequest reference
 						userSubscribeRequest.BaseRequest = baseRequestObj
 
-						//Check email/pw, login if needed.
 						userModels.Subscribe(wsConn, userSubscribeRequest)
 
 					case "Lookup":
 
-						// {"Resource":"User", "Action":"Lookup", "LookupEmail":"abcd@efgh.edu", "UserId":"56297d8e111aeb5f53000001", "Token": "token-fahslaj"}
+						// {"Resource":"User", "Action":"Lookup", "LookupUsername":"abcd", "Username":"abcd", "Token": "token-fahslaj"}
 						var userLookupRequest userRequests.UserLookupRequest
 						if err := json.Unmarshal(message, &userLookupRequest); err != nil {
 							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
@@ -274,7 +301,6 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						// Add BaseRequest reference
 						userLookupRequest.BaseRequest = baseRequestObj
 
-						//Check email/pw, login if needed.
 						userModels.LookupUser(wsConn, userLookupRequest)
 
 					//TODO: maybe delete?

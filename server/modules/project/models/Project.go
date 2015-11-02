@@ -13,7 +13,8 @@ import (
 /**
 Permissions for users:
 	1 - read
-	2 - write
+	2 - read/comment
+	3 - read/write
 	5 - admin
 	10 - owners
 
@@ -39,7 +40,7 @@ func CreateProject(wsConn *websocket.Conn, projectCreateRequest projectRequests.
 	project.Id = managers.NewObjectIdString()
 	project.Name = projectCreateRequest.Name
 	project.ServerPath = project.Id
-	project.Permissions = map[string]int{projectCreateRequest.BaseRequest.UserId: 10} // Set creator to owner permissions
+	project.Permissions = map[string]int{projectCreateRequest.BaseRequest.Username: 10} // Set creator to owner permissions
 
 	// Get new DB connection
 	session, collection := managers.GetMGoCollection("Projects")
@@ -84,7 +85,7 @@ func GrantProjectPermissions(wsConn *websocket.Conn, projectGrantPermissionsRequ
 		return
 	}
 
-	if (!CheckUserHasPermissions(project, projectGrantPermissionsRequest.BaseRequest.UserId, 5)) {
+	if (!CheckUserHasPermissions(project, projectGrantPermissionsRequest.BaseRequest.Username, 5)) {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-207, projectGrantPermissionsRequest.BaseRequest.Tag, nil))
 		return
 	}
@@ -92,7 +93,7 @@ func GrantProjectPermissions(wsConn *websocket.Conn, projectGrantPermissionsRequ
 	// Make sure that there is still an owner of the project.
 	owner := ""
 	for key, value := range project.Permissions {
-		if value == 10 && key != projectGrantPermissionsRequest.GrantUserId {
+		if value == 10 && key != projectGrantPermissionsRequest.GrantUsername {
 			owner = key
 		}
 	}
@@ -101,7 +102,7 @@ func GrantProjectPermissions(wsConn *websocket.Conn, projectGrantPermissionsRequ
 		return
 	}
 
-	project.Permissions[projectGrantPermissionsRequest.GrantUserId] = projectGrantPermissionsRequest.PermissionLevel
+	project.Permissions[projectGrantPermissionsRequest.GrantUsername] = projectGrantPermissionsRequest.PermissionLevel
 
 	// Get new DB connection
 	session, collection := managers.GetMGoCollection("Projects")
@@ -129,7 +130,7 @@ func RevokeProjectPermissions(wsConn *websocket.Conn, projectRevokePermissionsRe
 		return
 	}
 
-	if (!CheckUserHasPermissions(project, projectRevokePermissionsRequest.BaseRequest.UserId, 5)) {
+	if (!CheckUserHasPermissions(project, projectRevokePermissionsRequest.BaseRequest.Username, 5)) {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-207, projectRevokePermissionsRequest.BaseRequest.Tag, nil))
 		return
 	}
@@ -137,7 +138,7 @@ func RevokeProjectPermissions(wsConn *websocket.Conn, projectRevokePermissionsRe
 	// Make sure that there is still an owner of the project.
 	owner := ""
 	for key, value := range project.Permissions {
-		if value == 10 && key != projectRevokePermissionsRequest.RevokeUserId {
+		if value == 10 && key != projectRevokePermissionsRequest.RevokeUsername {
 			owner = key
 		}
 	}
@@ -146,7 +147,7 @@ func RevokeProjectPermissions(wsConn *websocket.Conn, projectRevokePermissionsRe
 		return
 	}
 
-	delete(project.Permissions, projectRevokePermissionsRequest.RevokeUserId)
+	delete(project.Permissions, projectRevokePermissionsRequest.RevokeUsername)
 
 	// Get new DB connection
 	session, collection := managers.GetMGoCollection("Projects")
@@ -161,6 +162,18 @@ func RevokeProjectPermissions(wsConn *websocket.Conn, projectRevokePermissionsRe
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(projectRevokePermissionsRequest.BaseRequest.Tag, nil))
 	managers.NotifyProjectClients(projectRevokePermissionsRequest.BaseRequest.ResId, projectRevokePermissionsRequest.GetNotification(), wsConn)
+}
+
+func GetCollaborators(wsConn *websocket.Conn, getCollaboratorsRequest projectRequests.ProjectGetCollaboratorsRequest) {
+
+	project, err := GetProjectById(getCollaboratorsRequest.BaseRequest.ResId);
+
+	if err != nil {
+		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-200, getCollaboratorsRequest.BaseRequest.Tag, nil))
+		return
+	}
+
+	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(getCollaboratorsRequest.BaseRequest.Tag, map[string]interface{}{"Collaborators":project.Permissions}))
 }
 
 // Delete project (?)
@@ -181,8 +194,8 @@ func GetProjectById(id string) (*Project, error) {
 	return result, nil
 }
 
-func CheckUserHasPermissions(project *Project, userId string, permissionsLevel int) bool {
-	if (project.Permissions[userId] >= permissionsLevel) {
+func CheckUserHasPermissions(project *Project, username string, permissionsLevel int) bool {
+	if (project.Permissions[username] >= permissionsLevel) {
 		return true;
 	}
 	return false;

@@ -13,12 +13,12 @@ import (
 )
 
 type FileChange struct {
-	Id      string    `bson:"_id"` // ID of object
-	Changes string                 // Client-Computed changes (patch).
-	Version int64                    // Version number
-	File    string                 // id of file that was changed
-	User    string                 // id of user that made the change TODO: REFACTOR TO BE USERID
-	Date    time.Time              // Date/Time change was made
+	Id       string    `bson:"_id"` // ID of object
+	Changes  string                 // Client-Computed changes (patch).
+	Version  int64                  // Version number
+	FileId   string                 // id of file that was changed
+	Username string                 // id of user that made the change
+	Date     time.Time              // Date/Time change was made
 }
 
 func InsertChange(wsConn *websocket.Conn, fileChangeRequest fileRequests.FileChangeRequest) {
@@ -40,9 +40,9 @@ func InsertChange(wsConn *websocket.Conn, fileChangeRequest fileRequests.FileCha
 	fileChange := new(FileChange)
 	fileChange.Id = managers.NewObjectIdString()
 	fileChange.Changes = fileChangeRequest.Changes
-	fileChange.File = fileChangeRequest.BaseRequest.ResId
+	fileChange.FileId = fileChangeRequest.BaseRequest.ResId
 	fileChange.Version = fileChangeRequest.FileVersion
-	fileChange.User = fileChangeRequest.BaseRequest.UserId
+	fileChange.Username = fileChangeRequest.BaseRequest.Username
 	fileChange.Date = time.Now().UTC()
 
 	changesSession, changesCollection := managers.GetMGoCollection("Changes")
