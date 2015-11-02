@@ -6,8 +6,8 @@ import (
 )
 
 type ProjectRevokePermissionsRequest struct {
-	BaseRequest baseRequests.BaseRequest // BaseMessage for Tag, Resource and Method
-	RevokeUsername string           // User id
+	BaseRequest    baseRequests.BaseRequest // BaseMessage for Tag, Resource and Method
+	RevokeUsername string                   // User id
 }
 
 func (message *ProjectRevokePermissionsRequest) GetNotification() *baseModels.WSNotification {

@@ -7,7 +7,7 @@ import (
 
 type FileMoveRequest struct {
 	BaseRequest baseRequests.BaseRequest // Add, Update, Remove
-	NewPath     string           // New File Name
+	NewPath     string                   // New File Name
 }
 
 func (message *FileMoveRequest) GetNotification() *baseModels.WSNotification {

@@ -40,7 +40,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 	wsConn, err := upgrader.Upgrade(responseWriter, request, nil)
 	if err != nil {
-		log.Println("Failed to upgrade connection:", err)
+		managers.LogError("Failed to upgrade connection:", err)
 		return
 	}
 
@@ -70,9 +70,23 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 				managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-105, baseRequestObj.Tag, nil))
 			} else {
 
+				managers.LogAccess(baseRequestObj, string(message))
+
 				switch baseRequestObj.Resource {
 				case "Project":
 					switch baseRequestObj.Action {
+					case "GetPermissionLevels":
+						// {"Resource":"Project", "Action":"GetPermissionLevels", "Username":"abcd", "Token": "test"}
+						// Deserialize from JSON
+						var projectGetPermissionLevelsRequest projectRequests.ProjectGetPermissionLevelsRequest
+						if err := json.Unmarshal(message, &projectGetPermissionLevelsRequest); err != nil {
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
+							break
+						}
+						// Add BaseRequest reference
+						projectGetPermissionLevelsRequest.BaseRequest = baseRequestObj
+						projectModels.GetPermissionLevels(wsConn, projectGetPermissionLevelsRequest)
+
 					case "Create":
 
 						// {"Resource":"Project", "Action":"Create", "Username":"abcd", "Token": "$2a$10$kWgnc1TcG.KBaGH0cjY52OzWYt77XvkGRtOpim6ISD/W8avdujeTO", "Name":"foo"}
@@ -338,19 +352,21 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 
-	pwd, err := os.Getwd()
-	if err != nil {
-		log.Fatal("Could not get Working Directory: ", err)
-	}
-	log.Println("Running in directory:", pwd)
-
 	managers.ConnectMGo()
 	defer managers.GetPrimaryMGoSession().Close()
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		managers.LogError("Fatal error: Could not get Working Directory", err)
+		log.Fatal(err)
+	}
+	managers.LogInfo("Running in directory: " + pwd)
 
 	http.HandleFunc("/ws/", handleWSConn)
 	http.HandleFunc("/", handleHTTPConn)
 	err = http.ListenAndServe(*addr, nil)
 	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+		managers.LogError("Fatal error: Could not get bind port", err)
+		log.Fatal(err)
 	}
 }

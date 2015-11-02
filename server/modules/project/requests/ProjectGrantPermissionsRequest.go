@@ -7,7 +7,7 @@ import (
 
 type ProjectGrantPermissionsRequest struct {
 	BaseRequest     baseRequests.BaseRequest // BaseMessage for Tag, Resource and Method
-	GrantUsername string                   // User id
+	GrantUsername   string                   // User id
 	PermissionLevel int                      // Permissions level
 }
 

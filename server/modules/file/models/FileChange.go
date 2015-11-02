@@ -1,7 +1,6 @@
 package fileModels
 
 import (
-	"log"
 	"time"
 
 	"github.com/CodeCollaborate/CodeCollaborate/server/managers"
@@ -57,7 +56,7 @@ func InsertChange(wsConn *websocket.Conn, fileChangeRequest fileRequests.FileCha
 	}
 	err = changesCollection.EnsureIndex(index)
 	if err != nil {
-		log.Println("Failed to ensure changes index:", err)
+		managers.LogError("Failed to ensure changes index", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-400, fileChangeRequest.BaseRequest.Tag, nil))
 	}
 
@@ -91,8 +90,7 @@ func GetChangeById(id string) (*FileChange, error) {
 	result := new(FileChange)
 	err := collection.Find(bson.M{"_id": id}).One(&result)
 	if err != nil {
-		log.Println("Failed to retrieve FileChange")
-		log.Println(err)
+		managers.LogError("Failed to retrieve FileChange", err)
 		return nil, err
 	}
 
@@ -107,8 +105,7 @@ func GetChangesByFile(fileId string) ([]FileChange, error) {
 	var result []FileChange
 	err := collection.Find(bson.M{"file": fileId}).Sort("version").All(&result)
 	if err != nil {
-		log.Println("Failed to retrieve FileChanges")
-		log.Println(err)
+		managers.LogError("Failed to retrieve FileChanges", err)
 		return nil, err
 	}
 

@@ -7,7 +7,7 @@ import (
 
 type FileChangeRequest struct {
 	BaseRequest baseRequests.BaseRequest // Add, Update, Remove
-	FileVersion int64                      // Version of file to be updated
+	FileVersion int64                    // Version of file to be updated
 	Changes     string                   // Client-Computed changes (patch).
 }
 

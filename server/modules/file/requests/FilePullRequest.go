@@ -5,5 +5,5 @@ import (
 )
 
 type FilePullRequest struct {
-	BaseRequest  baseRequests.BaseRequest // Add, Update, Remove
+	BaseRequest baseRequests.BaseRequest // Add, Update, Remove
 }

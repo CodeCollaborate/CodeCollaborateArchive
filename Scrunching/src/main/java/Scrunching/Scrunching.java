@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * Created by Joel Shapiro on 10/27/15.
  * Part of the CodeCollaborate project
- *
+ * <p/>
  * THIS ASSUMES FILES WILL FIT IN MEMORY
  */
 
@@ -58,7 +58,7 @@ public class Scrunching {
         String line;
 
         try {
-            while ((line = fileIn.readLine()) != null){
+            while ((line = fileIn.readLine()) != null) {
                 stringBuilder.append(line).append("\n");
             }
         } catch (IOException e) {
@@ -84,7 +84,7 @@ public class Scrunching {
 
         ArrayList<String> idsToRemove = new ArrayList<String>();
 
-        for (Map.Entry<String, String> entry : patches.entrySet()){
+        for (Map.Entry<String, String> entry : patches.entrySet()) {
             key = entry.getKey();
             patch = entry.getValue();
 
@@ -101,7 +101,7 @@ public class Scrunching {
         MongoCollection changes = db.getCollection("Changes");
         // have to do a bad way because collection.remove is no longer a thing
         for (String id : idsToRemove) {
-            if (! changes.deleteOne(new Document("_id", id)).wasAcknowledged()) {
+            if (!changes.deleteOne(new Document("_id", id)).wasAcknowledged()) {
                 System.out.println("ERROR: unable to delete file");
             }
         }
@@ -124,7 +124,6 @@ public class Scrunching {
     }
 
     /**
-     *
      * @param fileId: id of the file to find
      * @return map of _ids to changes
      */
@@ -143,7 +142,7 @@ public class Scrunching {
         return patches;
     }
 
-    private static Object[] scrunch(String patch, String fileString){
+    private static Object[] scrunch(String patch, String fileString) {
         List<DiffMatchPatch.Patch> patchList = null;
 
         try {

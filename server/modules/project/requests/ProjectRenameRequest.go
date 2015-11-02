@@ -7,7 +7,7 @@ import (
 
 type ProjectRenameRequest struct {
 	BaseRequest baseRequests.BaseRequest // BaseMessage for Tag, Resource and Method
-	NewName     string           // New Project Name
+	NewName     string                   // New Project Name
 }
 
 func (message *ProjectRenameRequest) GetNotification() *baseModels.WSNotification {
