@@ -127,19 +127,33 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 						projectModels.RevokeProjectPermissions(wsConn, projectRevokePermissionsRequest)
 
-					case "GetConnectedClients":
+					case "GetSubscribedClients":
 
-						// {"Resource":"Project", "Action":"GetConnectedClients", "ResId": "561987174357413b14000002", "Username":"abcd", "Token": "test"}
+						// {"Resource":"Project", "Action":"GetSubscribedClients", "ResId": "561987174357413b14000002", "Username":"abcd", "Token": "test"}
 						// Deserialize from JSON
-						var projectGetConnectedClientsRequest projectRequests.ProjectGetConnectedClientsRequest
-						if err := json.Unmarshal(message, &projectGetConnectedClientsRequest); err != nil {
+						var projectGetSubscribedClientsRequest projectRequests.ProjectGetSubscribedClientsRequest
+						if err := json.Unmarshal(message, &projectGetSubscribedClientsRequest); err != nil {
 							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
 							break
 						}
 						// Add BaseRequest reference
-						projectGetConnectedClientsRequest.BaseRequest = baseRequestObj
+						projectGetSubscribedClientsRequest.BaseRequest = baseRequestObj
 
-						managers.GetConnectedProjectClients(wsConn, projectGetConnectedClientsRequest)
+						managers.GetSubscribedClients(wsConn, projectGetSubscribedClientsRequest)
+
+					case "GetCollaborators":
+
+						// {"Resource":"Project", "Action":"GetCollaborators", "ResId": "561987174357413b14000002", "Username":"abcd", "Token": "test"}
+						// Deserialize from JSON
+						var ProjectGetCollaboratorsRequest projectRequests.ProjectGetCollaboratorsRequest
+						if err := json.Unmarshal(message, &ProjectGetCollaboratorsRequest); err != nil {
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
+							break
+						}
+						// Add BaseRequest reference
+						ProjectGetCollaboratorsRequest.BaseRequest = baseRequestObj
+
+						projectModels.GetCollaborators(wsConn, ProjectGetCollaboratorsRequest)
 
 					case "Delete":
 					// TODO

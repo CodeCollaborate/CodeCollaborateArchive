@@ -164,6 +164,18 @@ func RevokeProjectPermissions(wsConn *websocket.Conn, projectRevokePermissionsRe
 	managers.NotifyProjectClients(projectRevokePermissionsRequest.BaseRequest.ResId, projectRevokePermissionsRequest.GetNotification())
 }
 
+func GetCollaborators(wsConn *websocket.Conn, getCollaboratorsRequest projectRequests.ProjectGetCollaboratorsRequest) {
+
+	project, err := GetProjectById(getCollaboratorsRequest.BaseRequest.ResId);
+
+	if err != nil {
+		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-200, getCollaboratorsRequest.BaseRequest.Tag, nil))
+		return
+	}
+
+	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(getCollaboratorsRequest.BaseRequest.Tag, map[string]interface{}{"Collaborators":project.Permissions}))
+}
+
 // Delete project (?)
 
 func GetProjectById(id string) (*Project, error) {

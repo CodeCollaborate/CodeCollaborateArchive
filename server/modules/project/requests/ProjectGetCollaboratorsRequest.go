@@ -4,6 +4,6 @@ import (
 	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/requests"
 )
 
-type ProjectGetSubscribedClientsRequest struct {
+type ProjectGetCollaboratorsRequest struct {
 	BaseRequest baseRequests.BaseRequest // BaseMessage for Tag, Resource and Method
 }

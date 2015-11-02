@@ -82,7 +82,7 @@ func NotifyProjectClients(projectId string, notification *baseModels.WSNotificat
 	}
 }
 
-func GetConnectedProjectClients(conn *websocket.Conn, getConnectedClientsRequest projectRequests.ProjectGetConnectedClientsRequest) {
+func GetSubscribedClients(conn *websocket.Conn, getConnectedClientsRequest projectRequests.ProjectGetSubscribedClientsRequest) {
 
 	var users []string = make([]string, 0, len(proj_wsConn[getConnectedClientsRequest.BaseRequest.ResId]))
 
