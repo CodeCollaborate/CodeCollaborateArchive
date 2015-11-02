@@ -13,12 +13,12 @@ import (
 )
 
 type FileChange struct {
-	Id      string    `bson:"_id"` // ID of object
-	Changes string                 // Client-Computed changes (patch).
-	Version int64                    // Version number
-	FileId string                 // id of file that was changed
+	Id       string    `bson:"_id"` // ID of object
+	Changes  string                 // Client-Computed changes (patch).
+	Version  int64                  // Version number
+	FileId   string                 // id of file that was changed
 	Username string                 // id of user that made the change
-	Date    time.Time              // Date/Time change was made
+	Date     time.Time              // Date/Time change was made
 }
 
 func InsertChange(wsConn *websocket.Conn, fileChangeRequest fileRequests.FileChangeRequest) {
