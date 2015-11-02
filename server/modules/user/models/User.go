@@ -1,7 +1,6 @@
 package userModels
 
 import (
-	"log"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -30,7 +29,7 @@ func RegisterUser(wsConn *websocket.Conn, registrationRequest userRequests.UserR
 	// Hash password using bcrypt
 	pwHashBytes, err := bcrypt.GenerateFromPassword([]byte(registrationRequest.Password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Println("Failed to hash password:", err)
+		managers.LogError("Failed to hash password", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil))
 		return
 	}
@@ -58,7 +57,7 @@ func RegisterUser(wsConn *websocket.Conn, registrationRequest userRequests.UserR
 	}
 	err = collection.EnsureIndex(index)
 	if err != nil {
-		log.Println("Failed to ensure email index:", err)
+		managers.LogError("Failed to ensure email index", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil))
 		return
 	}
@@ -73,7 +72,7 @@ func RegisterUser(wsConn *websocket.Conn, registrationRequest userRequests.UserR
 	}
 	err = collection.EnsureIndex(index)
 	if err != nil {
-		log.Println("Failed to ensure username index:", err)
+		managers.LogError("Failed to ensure username index", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil))
 		return
 	}
@@ -83,10 +82,10 @@ func RegisterUser(wsConn *websocket.Conn, registrationRequest userRequests.UserR
 	if err != nil {
 		// Duplicate entry
 		if mgo.IsDup(err) {
-			log.Println("Error registering user:", err)
 			managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-102, registrationRequest.BaseRequest.Tag, nil))
 			return
 		}
+		managers.LogError("Error registering user", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil))
 		return
 	}
@@ -115,7 +114,7 @@ func LoginUser(wsConn *websocket.Conn, loginRequest userRequests.UserLoginReques
 
 	tokenBytes, err := bcrypt.GenerateFromPassword([]byte(loginRequest.Username + time.Now().String()), bcrypt.DefaultCost)
 	if err != nil {
-		log.Println("Failed to generate token:", err)
+		managers.LogError("Failed to generate token", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-103, loginRequest.BaseRequest.Tag, nil))
 		return
 	}
@@ -124,7 +123,7 @@ func LoginUser(wsConn *websocket.Conn, loginRequest userRequests.UserLoginReques
 
 	err = addToken(collection, user, token)
 	if err != nil {
-		log.Println("Failed to save token:", err)
+		managers.LogError("Failed to save token", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-103, loginRequest.BaseRequest.Tag, nil))
 		return
 	}
@@ -211,8 +210,7 @@ func GetUserByUsername(username string) (*User, error) {
 	result := new(User)
 	err := collection.Find(bson.M{"username": username}).One(&result)
 	if err != nil {
-		log.Println("Failed to retrieve User")
-		log.Println(err)
+		managers.LogError("Failed to retrieve User", err)
 		return nil, err
 	}
 

@@ -40,7 +40,7 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 	}
 	wsConn, err := upgrader.Upgrade(responseWriter, request, nil)
 	if err != nil {
-		log.Println("Failed to upgrade connection:", err)
+		managers.LogError("Failed to upgrade connection:", err)
 		return
 	}
 
@@ -69,6 +69,8 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 			if !("User" == baseRequestObj.Resource && ("Register" == baseRequestObj.Action || "Login" == baseRequestObj.Action)) && !userModels.CheckUserAuth(baseRequestObj) {
 				managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-105, baseRequestObj.Tag, nil))
 			} else {
+
+				managers.LogAccess(baseRequestObj, string(message))
 
 				switch baseRequestObj.Resource {
 				case "Project":
@@ -350,19 +352,21 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 
-	pwd, err := os.Getwd()
-	if err != nil {
-		log.Fatal("Could not get Working Directory: ", err)
-	}
-	log.Println("Running in directory:", pwd)
-
 	managers.ConnectMGo()
 	defer managers.GetPrimaryMGoSession().Close()
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		managers.LogError("Fatal error: Could not get Working Directory", err)
+		log.Fatal(err)
+	}
+	managers.LogInfo("Running in directory: " + pwd)
 
 	http.HandleFunc("/ws/", handleWSConn)
 	http.HandleFunc("/", handleHTTPConn)
 	err = http.ListenAndServe(*addr, nil)
 	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+		managers.LogError("Fatal error: Could not get bind port", err)
+		log.Fatal(err)
 	}
 }

@@ -2,7 +2,6 @@ package managers
 
 import (
 	"github.com/gorilla/websocket"
-	"log"
 	"encoding/json"
 	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/models"
 	"github.com/CodeCollaborate/CodeCollaborate/server/managers/models"
@@ -15,9 +14,6 @@ var webSocket_wsConn = map[*websocket.Conn]*models.WSConnection{} // maps websoc
 
 func WebSocketSubscribeProject(conn *websocket.Conn, username string, projectId string) bool {
 
-	log.Println(projectId)
-	log.Println(username)
-
 	var wsConn *models.WSConnection
 
 	if (webSocket_wsConn[conn] == nil) {
@@ -29,7 +25,6 @@ func WebSocketSubscribeProject(conn *websocket.Conn, username string, projectId 
 	} else {
 		wsConn = webSocket_wsConn[conn];
 	}
-	log.Println(wsConn)
 
 	if (proj_wsConn[projectId] == nil) {
 		proj_wsConn[projectId] = []*models.WSConnection{}
@@ -40,8 +35,6 @@ func WebSocketSubscribeProject(conn *websocket.Conn, username string, projectId 
 
 	proj_wsConn[projectId] = append(proj_wsConn[projectId], wsConn)
 	wsConn_proj[wsConn] = append(wsConn_proj[wsConn], projectId)
-
-	log.Println(proj_wsConn)
 
 	return true
 }
@@ -100,16 +93,16 @@ func GetSubscribedClients(conn *websocket.Conn, getConnectedClientsRequest proje
 
 func SendWebSocketMessage(conn *websocket.Conn, message interface{}) error {
 	respBytes, err := json.Marshal(message)
-	log.Println(string(respBytes[:]))
+	LogDebug(string(respBytes[:]))
 
 	if err != nil {
-		log.Println("Error serializing response to JSON:", err)
+		LogError("Error serializing response to JSON:", err)
 		return err
 	}
 
 	err = conn.WriteMessage(websocket.TextMessage, respBytes)
 	if err != nil {
-		log.Println("Error writing to WebSocket:", err)
+		LogError("Error writing to WebSocket:", err)
 		return err
 	}
 	return nil

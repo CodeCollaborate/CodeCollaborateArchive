@@ -4,8 +4,19 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"time"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/requests"
 )
+
 var dbSession *mgo.Session
+var LogLevel int = 1
+
+/*
+Log Levels:
+0 - debug
+1 - info
+2 - warn
+3 - error
+ */
 
 const DB_HOST string = "localhost"
 const DB_PORT string = "27017"
@@ -21,7 +32,7 @@ func ConnectMGo() {
 
 	dbSession.SetMode(mgo.Strong, true)
 	//	dbSession.SetMode(mgo.Eventual, true)
-	log.Println("Connected to DB")
+	LogInfo("Connected to DB")
 }
 
 func GetPrimaryMGoSession() *mgo.Session {
@@ -54,11 +65,79 @@ func GetMGoCollection(collectionName string) (*mgo.Session, *mgo.Collection) {
 	return session, database.C(collectionName)
 }
 
-func LogError(err error) {
-	session, collection := GetMGoCollection("errors")
-	defer session.Close()
+func LogError(message string, err error) {
+	if (LogLevel <= 4) {
 
-	collection.Insert(bson.M{"error": err.Error(), "timestamp": time.Now().UTC().String()})
+		session, collection := GetMGoCollection("Log")
+		defer session.Close()
+
+		collection.Insert(bson.M{
+			"level": "error",
+			"message": message,
+			"error": err.Error(),
+			"timestamp": time.Now().UTC().String(),
+		})
+	}
+}
+
+func LogWarn(message string) {
+	if (LogLevel <= 3) {
+
+		session, collection := GetMGoCollection("Log")
+		defer session.Close()
+
+		collection.Insert(bson.M{
+			"level": "warn",
+			"message": message,
+			"timestamp": time.Now().UTC().String(),
+		})
+
+		log.Println(message)
+	}
+}
+
+func LogAccess(baseRequest baseRequests.BaseRequest, rawMessage string) {
+	if (LogLevel <= 2) {
+		session, collection := GetMGoCollection("Log")
+		defer session.Close()
+
+		collection.Insert(bson.M{
+			"level": "access",
+			"resource": baseRequest.Resource,
+			"resource_id": baseRequest.ResId,
+			"username": baseRequest.Username,
+			"timestamp": time.Now().UTC().String(),
+			"raw_message": rawMessage,
+		})
+	}
+}
+
+func LogInfo(message string) {
+	if (LogLevel <= 1) {
+
+		session, collection := GetMGoCollection("Log")
+		defer session.Close()
+
+		collection.Insert(bson.M{
+			"level": "info",
+			"message": message,
+			"timestamp": time.Now().UTC().String(),
+		})
+	}
+}
+
+func LogDebug(message string) {
+	if (LogLevel <= 0) {
+
+		session, collection := GetMGoCollection("Log")
+		defer session.Close()
+
+		collection.Insert(bson.M{
+			"level": "debug",
+			"message": message,
+			"timestamp": time.Now().UTC().String(),
+		})
+	}
 }
 
 func NewObjectIdString() string {

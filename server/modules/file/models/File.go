@@ -1,8 +1,6 @@
 package fileModels
 
 import (
-	"log"
-
 	"github.com/CodeCollaborate/CodeCollaborate/server/managers"
 	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/models"
 	"github.com/CodeCollaborate/CodeCollaborate/server/modules/file/requests"
@@ -59,7 +57,7 @@ func CreateFile(wsConn *websocket.Conn, fileCreateRequest fileRequests.FileCreat
 	}
 	err := collection.EnsureIndex(index)
 	if err != nil {
-		log.Println("Failed to ensure file name/path index:", err)
+		managers.LogError("Failed to ensure file name/path index", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil))
 		return
 	}
@@ -68,7 +66,7 @@ func CreateFile(wsConn *websocket.Conn, fileCreateRequest fileRequests.FileCreat
 	err = collection.Insert(file)
 	if err != nil {
 		if mgo.IsDup(err) {
-			log.Println("Error creating file record:", err)
+			managers.LogError("Error creating file record", err)
 			managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-305, fileCreateRequest.BaseRequest.Tag, nil))
 			return
 		}
@@ -86,13 +84,13 @@ func CreateFile(wsConn *websocket.Conn, fileCreateRequest fileRequests.FileCreat
 
 	err = os.MkdirAll("files/" + fileCreateRequest.ProjectId + "/" + fileCreateRequest.RelativePath, os.ModeExclusive)
 	if err != nil {
-		log.Println("Failed to create file directory:", err)
+		managers.LogError("Failed to create file directory", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil))
 		return
 	}
 	err = ioutil.WriteFile(file.getPath(), fileCreateRequest.FileBytes, os.ModeExclusive)
 	if err != nil {
-		log.Println("Failed to write file:", err)
+		managers.LogError("Failed to write file", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil))
 		return
 	}
@@ -117,10 +115,10 @@ func RenameFile(wsConn *websocket.Conn, fileRenameRequest fileRequests.FileRenam
 	err = collection.Update(bson.M{"_id": fileRenameRequest.BaseRequest.ResId}, bson.M{"$set": bson.M{"name": fileRenameRequest.NewName, "version": file.Version}})
 	if err != nil {
 		if mgo.IsDup(err) {
-			log.Println("Error registering user:", err)
 			managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-306, fileRenameRequest.BaseRequest.Tag, nil))
 			return
 		}
+		managers.LogError("Error renaming file", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-302, fileRenameRequest.BaseRequest.Tag, nil))
 		return
 	}
@@ -145,10 +143,10 @@ func MoveFile(wsConn *websocket.Conn, fileMoveRequest fileRequests.FileMoveReque
 	err = collection.Update(bson.M{"_id": fileMoveRequest.BaseRequest.ResId}, bson.M{"$set": bson.M{"relative_path": fileMoveRequest.NewPath, "version": file.Version}})
 	if err != nil {
 		if mgo.IsDup(err) {
-			log.Println("Error registering user:", err)
 			managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-307, fileMoveRequest.BaseRequest.Tag, nil))
 			return
 		}
+		managers.LogError("Error renaming file", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-303, fileMoveRequest.BaseRequest.Tag, nil))
 		return
 	}
@@ -196,14 +194,14 @@ func PullFile(wsConn *websocket.Conn, filePullRequest fileRequests.FilePullReque
 	}
 	fileBytes, err := ioutil.ReadFile(file.getPath())
 	if err != nil {
-		log.Println("Failed to read from file:", err)
+		managers.LogError("Failed to read from file", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-301, filePullRequest.BaseRequest.Tag, nil))
 		return
 	}
 
 	changes, err := GetChangesByFile(file.Id)
 	if err != nil {
-		log.Println("Failed to retrieve changes:", err)
+		managers.LogError("Failed to retrieve changes", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-402, filePullRequest.BaseRequest.Tag, nil))
 		return
 	}
@@ -219,8 +217,7 @@ func GetFileById(id string) (*File, error) {
 	result := new(File)
 	err := collection.Find(bson.M{"_id": id}).One(&result)
 	if err != nil {
-		log.Println("Failed to retrieve File")
-		log.Println(err)
+		managers.LogError("Failed to retrieve File", err)
 		return nil, err
 	}
 

@@ -1,8 +1,6 @@
 package projectModels
 
 import (
-	"log"
-
 	"github.com/CodeCollaborate/CodeCollaborate/server/managers"
 	"github.com/CodeCollaborate/CodeCollaborate/server/modules/project/requests"
 	"gopkg.in/mgo.v2/bson"
@@ -32,7 +30,7 @@ type Project struct {
 											//TODO: wildcard permissions, add once we make adding to projects a thing
 }
 
-func GetPermissionLevels (wsConn *websocket.Conn, projectGetPermissionLevelsRequest projectRequests.ProjectGetPermissionLevelsRequest) {
+func GetPermissionLevels(wsConn *websocket.Conn, projectGetPermissionLevelsRequest projectRequests.ProjectGetPermissionLevelsRequest) {
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(projectGetPermissionLevelsRequest.BaseRequest.Tag, map[string]interface{}{"PermissionLevels": PermissionLevels}))
 }
@@ -191,8 +189,7 @@ func GetProjectById(id string) (*Project, error) {
 	result := new(Project)
 	err := collection.Find(bson.M{"_id": id}).One(&result)
 	if err != nil {
-		log.Println("Failed to retrieve Project")
-		log.Println(err)
+		managers.LogError("Failed to retrieve Project", err)
 		return nil, err
 	}
 
