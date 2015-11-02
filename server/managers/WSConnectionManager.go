@@ -78,7 +78,7 @@ func NotifyProjectClients(projectId string, notification *baseModels.WSNotificat
 	//	TODO: Change to use RabbitMQ or Redis
 
 	for _, value := range proj_wsConn[projectId] {
-		if (value != wsConn) {
+		if (value.WSConn != wsConn) {
 			SendWebSocketMessage(value, notification)
 		}
 	}
