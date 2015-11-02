@@ -16,10 +16,13 @@ import (
 )
 
 type User struct {
-	Id            string   `bson:"_id"`        // ID of object
-	Email         string                       // Email of user
-	Password_Hash string   `json:"-"`          // Hashed Password
-	Tokens        []string `json:"-"`          // Token after logged in.
+	Id            string   `json:"-",bson:"_id"` // ID of object
+	FirstName     string                         // User's First name
+	LastName      string                         // User's Last name
+	Email         string                         // Email of user; Unique
+	Username      string                         // Username; Unique
+	Password_Hash string   `json:"-"`            // Hashed Password
+	Tokens        []string `json:"-"`            // Token after logged in.
 }
 
 func RegisterUser(wsConn *websocket.Conn, registrationRequest userRequests.UserRegisterRequest) {
@@ -35,6 +38,9 @@ func RegisterUser(wsConn *websocket.Conn, registrationRequest userRequests.UserR
 	// Create new UserAuthData object
 	userAuthData := new(User)
 	userAuthData.Id = managers.NewObjectIdString()
+	userAuthData.FirstName = registrationRequest.FirstName
+	userAuthData.LastName = registrationRequest.LastName
+	userAuthData.Username = registrationRequest.Username
 	userAuthData.Email = registrationRequest.Email
 	userAuthData.Password_Hash = string(pwHashBytes[:])
 
@@ -53,6 +59,21 @@ func RegisterUser(wsConn *websocket.Conn, registrationRequest userRequests.UserR
 	err = collection.EnsureIndex(index)
 	if err != nil {
 		log.Println("Failed to ensure email index:", err)
+		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil))
+		return
+	}
+
+	// Make sure username is unique
+	index = mgo.Index{
+		Key:        []string{"username"},
+		Unique:     true,
+		DropDups:   true,
+		Background: true,
+		Sparse:     true,
+	}
+	err = collection.EnsureIndex(index)
+	if err != nil {
+		log.Println("Failed to ensure username index:", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-101, registrationRequest.BaseRequest.Tag, nil))
 		return
 	}
@@ -80,7 +101,7 @@ func LoginUser(wsConn *websocket.Conn, loginRequest userRequests.UserLoginReques
 	defer session.Close()
 
 	user := User{}
-	if err := collection.Find(bson.M{"email": loginRequest.Email}).One(&user); err != nil {
+	if err := collection.Find(bson.M{"username": loginRequest.Username}).One(&user); err != nil {
 		// Could not find user
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-104, loginRequest.BaseRequest.Tag, nil))
 		return
@@ -92,7 +113,7 @@ func LoginUser(wsConn *websocket.Conn, loginRequest userRequests.UserLoginReques
 		return
 	}
 
-	tokenBytes, err := bcrypt.GenerateFromPassword([]byte(loginRequest.Email + time.Now().String()), bcrypt.DefaultCost)
+	tokenBytes, err := bcrypt.GenerateFromPassword([]byte(loginRequest.Username + time.Now().String()), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("Failed to generate token:", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-103, loginRequest.BaseRequest.Tag, nil))
@@ -108,7 +129,7 @@ func LoginUser(wsConn *websocket.Conn, loginRequest userRequests.UserLoginReques
 		return
 	}
 
-	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(loginRequest.BaseRequest.Tag, map[string]interface{}{"UserId": user.Id, "Token": token}))
+	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(loginRequest.BaseRequest.Tag, map[string]interface{}{"Token": token}))
 }
 
 func Subscribe(wsConn *websocket.Conn, subscriptionRequest userRequests.UserSubscribeRequest) {
@@ -122,9 +143,10 @@ func Subscribe(wsConn *websocket.Conn, subscriptionRequest userRequests.UserSubs
 			return
 		}
 
+		// TODO: Add fail message if permission denied
 		for key, _ := range proj.Permissions {
-			if key == subscriptionRequest.BaseRequest.UserId {
-				if (!managers.WebSocketSubscribeProject(wsConn, project)) {
+			if key == subscriptionRequest.BaseRequest.Username {
+				if (!managers.WebSocketSubscribeProject(wsConn, subscriptionRequest.BaseRequest.Username, project)) {
 					managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-206, subscriptionRequest.BaseRequest.Tag, nil))
 					return
 				}
@@ -141,12 +163,12 @@ func LookupUser(wsConn *websocket.Conn, userLookupRequest userRequests.UserLooku
 	defer session.Close()
 
 	user := User{}
-	if err := collection.Find(bson.M{"email": userLookupRequest.LookupEmail}).One(&user); err != nil {
+	if err := collection.Find(bson.M{"username": userLookupRequest.LookupUsername}).One(&user); err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-100, userLookupRequest.BaseRequest.Tag, nil))
 		return;
 	}
 
-	data := map[string]interface{}{"UserId": user.Id}
+	data := map[string]interface{}{"User": user}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(userLookupRequest.BaseRequest.Tag, data))
 }
@@ -158,7 +180,7 @@ func CheckUserAuth(baseRequest baseRequests.BaseRequest) bool {
 	defer session.Close()
 
 	userAuthData := User{}
-	if err := collection.Find(bson.M{"_id": baseRequest.UserId}).One(&userAuthData); err != nil {
+	if err := collection.Find(bson.M{"username": baseRequest.Username}).One(&userAuthData); err != nil {
 		// Could not find user
 		return false
 	}
@@ -177,21 +199,5 @@ func CheckUserAuth(baseRequest baseRequests.BaseRequest) bool {
 func addToken(collection *mgo.Collection, userAuthData User, token string) error {
 	userAuthData.Tokens = append(userAuthData.Tokens, token)
 
-	return collection.Update(bson.M{"email": userAuthData.Email}, bson.M{"$set": bson.M{"tokens": userAuthData.Tokens}})
-}
-
-func GetUserById(id string) (*User, error) {
-	// Get new DB connection
-	session, collection := managers.GetMGoCollection("Users")
-	defer session.Close()
-
-	result := new(User)
-	err := collection.Find(bson.M{"_id": id}).One(&result)
-	if err != nil {
-		log.Println("Failed to retrieve User")
-		log.Println(err)
-		return nil, err
-	}
-
-	return result, nil
+	return collection.Update(bson.M{"username": userAuthData.Username}, bson.M{"$set": bson.M{"tokens": userAuthData.Tokens}})
 }

@@ -14,13 +14,19 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+
+/*
+ *
+ * TODO: Check permissions before running any of these!
+ *
+ */
 type File struct {
 	Id           string `bson:"_id"`           // ID of object
 	Name         string                        // Name of file
 	RelativePath string `bson:"relative_path"` // Path of file
-	Version      int64                           // File version
+	Version      int64                         // File version
 	Project      string                        // Reference to Project object
-	filePath     string `bson:"-",json:"-"`
+	filePath     string `bson:"-",json:"-"`    // Temp filepath cached variable
 }
 
 func (file File) getPath() string {
