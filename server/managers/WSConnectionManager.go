@@ -79,7 +79,7 @@ func NotifyProjectClients(projectId string, notification *baseModels.WSNotificat
 
 	for _, value := range proj_wsConn[projectId] {
 		if (value.WSConn != wsConn) {
-			SendWebSocketMessage(value, notification)
+			SendWebSocketMessage(value.WSConn, notification)
 		}
 	}
 }
