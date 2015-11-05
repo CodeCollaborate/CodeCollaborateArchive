@@ -6,6 +6,7 @@ import (
 	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/models"
 	"github.com/CodeCollaborate/CodeCollaborate/server/managers/models"
 	"github.com/CodeCollaborate/CodeCollaborate/server/modules/project/requests"
+	"log"
 )
 
 var proj_wsConn = map[string][]*models.WSConnection{} // maps projectId to WSConnection instances

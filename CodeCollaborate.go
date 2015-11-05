@@ -70,7 +70,9 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 				managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-105, baseRequestObj.Tag, nil))
 			} else {
 
-				managers.LogAccess(baseRequestObj, string(message))
+				if !(baseRequestObj.Resource == "User" && ("Login" == baseRequestObj.Action || "Register" == baseRequestObj.Action)) {
+					managers.LogAccess(baseRequestObj, string(message))
+				}
 
 				switch baseRequestObj.Resource {
 				case "Project":
@@ -177,7 +179,6 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						break
 					}
 				case "File":
-					// TODO: Do something.
 					switch baseRequestObj.Action {
 
 					case "Create":
