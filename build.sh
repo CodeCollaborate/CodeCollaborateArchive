@@ -12,5 +12,5 @@ sudo mkdir -p /CodeCollaborate
 echo "Restarting and updating service"
 sudo service CodeCollaborate stop
 sudo cp -f CodeCollaborate /CodeCollaborate
-sudo cp -f ./Scrunching/target/Scrunching.jar /CodeCollaborate
+sudo cp -f Scrunching/target/Scrunching.jar /CodeCollaborate
 sudo service CodeCollaborate start
