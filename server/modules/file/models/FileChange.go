@@ -12,12 +12,12 @@ import (
 )
 
 type FileChange struct {
-	Id       string    `bson:"_id"` // ID of object
-	Changes  string                 // Client-Computed changes (patch).
-	Version  int64                  // Version number
-	FileId   string                 // id of file that was changed
-	Username string                 // id of user that made the change
-	Date     time.Time              // Date/Time change was made
+	Id       string    `bson:"_id"`     // ID of object
+	Changes  string                     // Client-Computed changes (patch).
+	Version  int64                      // Version number
+	FileId   string    `bson:"file_id"` // id of file that was changed
+	Username string                     // id of user that made the change
+	Date     time.Time                  // Date/Time change was made
 }
 
 func InsertChange(wsConn *websocket.Conn, fileChangeRequest fileRequests.FileChangeRequest) {
@@ -103,7 +103,7 @@ func GetChangesByFile(fileId string) ([]FileChange, error) {
 	defer session.Close()
 
 	var result []FileChange
-	err := collection.Find(bson.M{"file": fileId}).Sort("version").All(&result)
+	err := collection.Find(bson.M{"file_id": fileId}).Sort("version").All(&result)
 	if err != nil {
 		managers.LogError("Failed to retrieve FileChanges", err)
 		return nil, err
