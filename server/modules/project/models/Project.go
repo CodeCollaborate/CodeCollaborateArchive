@@ -6,6 +6,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/models"
 	"github.com/gorilla/websocket"
+	"github.com/CodeCollaborate/CodeCollaborate/server/modules/file/models"
 )
 
 /**
@@ -177,6 +178,43 @@ func GetCollaborators(wsConn *websocket.Conn, getCollaboratorsRequest projectReq
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(getCollaboratorsRequest.BaseRequest.Tag, map[string]interface{}{"Collaborators":project.Permissions}))
+}
+
+func GetFiles(wsConn *websocket.Conn, projectFilesRequest projectRequests.ProjectGetFilesRequest) {
+
+	projects, err := fileModels.GetFilesByProjectId(projectFilesRequest.BaseRequest.ResId);
+
+	if err != nil {
+		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-200, projectFilesRequest.BaseRequest.Tag, nil))
+		return
+	}
+
+	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(projectFilesRequest.BaseRequest.Tag, map[string]interface{}{"Files":projects}))
+}
+
+func Subscribe(wsConn *websocket.Conn, subscriptionRequest projectRequests.ProjectSubscribeRequest) {
+
+	project := subscriptionRequest.BaseRequest.ResId
+
+	proj, err := GetProjectById(project)
+
+	if err != nil {
+		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-200, subscriptionRequest.BaseRequest.Tag, nil))
+		return
+	}
+
+	// TODO: Add fail message if permission denied
+	for key, _ := range proj.Permissions {
+		if key == subscriptionRequest.BaseRequest.Username {
+			if (!managers.WebSocketSubscribeProject(wsConn, subscriptionRequest.BaseRequest.Username, project)) {
+				managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-206, subscriptionRequest.BaseRequest.Tag, nil))
+				return
+			}
+		}
+	}
+
+	managers.NotifyProjectClients(project, subscriptionRequest.GetNotification(), wsConn)
+	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(subscriptionRequest.BaseRequest.Tag, nil))
 }
 
 // Delete project (?)

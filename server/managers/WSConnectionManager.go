@@ -22,6 +22,8 @@ func WebSocketSubscribeProject(conn *websocket.Conn, username string, projectId 
 		wsConn.WSConn = conn
 
 		webSocket_wsConn[conn] = wsConn
+	} else if (webSocket_wsConn[conn].Username == username && webSocket_wsConn[conn].WSConn == conn) {
+		return true
 	} else {
 		wsConn = webSocket_wsConn[conn];
 	}

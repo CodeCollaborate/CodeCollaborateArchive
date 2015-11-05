@@ -138,33 +138,6 @@ func LoginUser(wsConn *websocket.Conn, loginRequest userRequests.UserLoginReques
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(loginRequest.BaseRequest.Tag, map[string]interface{}{"Token": token}))
 }
 
-func Subscribe(wsConn *websocket.Conn, subscriptionRequest userRequests.UserSubscribeRequest) {
-
-	toSubscribe := subscriptionRequest.Projects
-	for _, project := range toSubscribe {
-		proj, err := projectModels.GetProjectById(project)
-
-		if err != nil {
-			managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-200, subscriptionRequest.BaseRequest.Tag, nil))
-			return
-		}
-
-		// TODO: Add fail message if permission denied
-		for key, _ := range proj.Permissions {
-			if key == subscriptionRequest.BaseRequest.Username {
-				if (!managers.WebSocketSubscribeProject(wsConn, subscriptionRequest.BaseRequest.Username, project)) {
-					managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-206, subscriptionRequest.BaseRequest.Tag, nil))
-					return
-				}
-			}
-		}
-
-		managers.NotifyProjectClients(project, subscriptionRequest.GetNotification(), wsConn)
-
-	}
-	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(subscriptionRequest.BaseRequest.Tag, nil))
-}
-
 func LookupUser(wsConn *websocket.Conn, userLookupRequest userRequests.UserLookupRequest) {
 
 	// Get new DB connection
