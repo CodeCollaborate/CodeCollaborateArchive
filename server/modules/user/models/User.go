@@ -26,6 +26,11 @@ type User struct {
 
 func RegisterUser(wsConn *websocket.Conn, registrationRequest userRequests.UserRegisterRequest) {
 
+//	if(!regexp.MatchString("[\\w]+", registrationRequest.Username)){
+//		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-106, registrationRequest.BaseRequest.Tag, nil))
+//		return
+//	}
+
 	// Hash password using bcrypt
 	pwHashBytes, err := bcrypt.GenerateFromPassword([]byte(registrationRequest.Password), bcrypt.DefaultCost)
 	if err != nil {
