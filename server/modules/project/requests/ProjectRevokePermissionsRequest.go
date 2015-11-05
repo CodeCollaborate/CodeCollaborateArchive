@@ -13,7 +13,7 @@ type ProjectRevokePermissionsRequest struct {
 func (message *ProjectRevokePermissionsRequest) GetNotification() *baseModels.WSNotification {
 
 	data := map[string]interface{}{
-		"RevokeUserEmail": message.RevokeUsername,
+		"RevokeUsername": message.RevokeUsername,
 	}
 	return baseModels.NewNotification(message.BaseRequest, data)
 }

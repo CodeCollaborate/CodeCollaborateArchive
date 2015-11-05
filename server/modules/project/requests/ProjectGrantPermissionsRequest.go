@@ -14,7 +14,7 @@ type ProjectGrantPermissionsRequest struct {
 func (message *ProjectGrantPermissionsRequest) GetNotification() *baseModels.WSNotification {
 
 	data := map[string]interface{}{
-		"GrantUserEmail": message.GrantUsername,
+		"GrantUsername": message.GrantUsername,
 		"PermissionLevel": message.PermissionLevel,
 	}
 	return baseModels.NewNotification(message.BaseRequest, data)

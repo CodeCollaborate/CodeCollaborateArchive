@@ -318,6 +318,19 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 						userModels.LookupUser(wsConn, userLookupRequest)
 
+					case "Projects":
+
+						// {"Resource":"User", "Action":"Projects", "Username":"abcd", "Token": "token-fahslaj"}
+						var userProjectsRequest userRequests.UserProjectsRequest
+						if err := json.Unmarshal(message, &userProjectsRequest); err != nil {
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
+							break
+						}
+						// Add BaseRequest reference
+						userProjectsRequest.BaseRequest = baseRequestObj
+
+						userModels.UserProjects(wsConn, userProjectsRequest)
+
 					//TODO: maybe delete?
 
 					//TODO: Change PW

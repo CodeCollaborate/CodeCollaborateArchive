@@ -182,6 +182,24 @@ func LookupUser(wsConn *websocket.Conn, userLookupRequest userRequests.UserLooku
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(userLookupRequest.BaseRequest.Tag, data))
 }
 
+func UserProjects(wsConn *websocket.Conn, userProjectsRequest userRequests.UserProjectsRequest) {
+
+	// Get new DB connection
+	session, collection := managers.GetMGoCollection("Projects")
+	defer session.Close()
+
+
+	var projects []projectModels.Project
+	if err := collection.Find(bson.M{"permissions." + userProjectsRequest.BaseRequest.Username: bson.M{"$gt": 0}}).All(&projects); err != nil {
+		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-100, userProjectsRequest.BaseRequest.Tag, nil))
+		return;
+	}
+
+	data := map[string]interface{}{"Projects": projects}
+
+	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(userProjectsRequest.BaseRequest.Tag, data))
+}
+
 func CheckUserAuth(baseRequest baseRequests.BaseRequest) bool {
 
 	// Get new DB connection

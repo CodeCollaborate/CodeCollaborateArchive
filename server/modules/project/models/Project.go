@@ -23,7 +23,7 @@ TODO: Accepts wildcard flag for Username: "*"
 type Project struct {
 	Id          string         `bson:"_id"` // ID of object
 	Name        string                      // Name of project
-	ServerPath  string                      // Path on server
+	ServerPath  string         `json:"-"`   // Path on server
 	Permissions map[string]int              // Array of references to User objects
 
 											//TODO: Add project versions, incremented on file creation, deletion, checked on ws connect
