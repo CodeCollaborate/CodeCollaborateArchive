@@ -224,6 +224,21 @@ func GetFileById(id string) (*File, error) {
 	return result, nil
 }
 
+func GetFilesByProjectId(projectId string) ([]File, error) {
+	// Get new DB connection
+	session, collection := managers.GetMGoCollection("Files")
+	defer session.Close()
+
+	var result []File
+	err := collection.Find(bson.M{"project": projectId}).All(&result)
+	if err != nil {
+		managers.LogError("Failed to retrieve Files for project " + projectId, err)
+		return nil, err
+	}
+
+	return result, nil
+}
+
 //func GetFileByPathName(path string, name string) (*File, error) {
 //	// Get new DB connection
 //	session, collection := managers.GetMGoCollection("Files")
