@@ -9,7 +9,7 @@
     <version>0.0.3</version>
 
     <build>
-        <finalName>Scrunching.jar</finalName>
+        <finalName>Scrunching</finalName>
 
         <plugins>
             <plugin>
