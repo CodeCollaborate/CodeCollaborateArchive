@@ -53,6 +53,7 @@ func WebSocketDisconnected(conn *websocket.Conn) {
 					proj_wsConn[project][len(proj_wsConn[project]) - 1] = nil // or the zero value of T
 					proj_wsConn[project] = proj_wsConn[project][:len(proj_wsConn[project]) - 1]
 					if len(proj_wsConn[project]) == 0 {
+						
 						delete(proj_wsConn, project)
 					}
 				}

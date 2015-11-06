@@ -14,8 +14,9 @@ var LogLevel int = 1
 Log Levels:
 0 - debug
 1 - info
-2 - warn
-3 - error
+2 - access
+3 - warn
+4 - error
  */
 
 const DB_HOST string = "localhost"
