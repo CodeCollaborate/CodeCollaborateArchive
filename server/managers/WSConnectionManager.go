@@ -22,6 +22,8 @@ func WebSocketSubscribeProject(conn *websocket.Conn, username string, projectId 
 		wsConn.WSConn = conn
 
 		webSocket_wsConn[conn] = wsConn
+	} else if (webSocket_wsConn[conn].Username == username && webSocket_wsConn[conn].WSConn == conn) {
+		return true
 	} else {
 		wsConn = webSocket_wsConn[conn];
 	}
@@ -81,14 +83,12 @@ func GetSubscribedClients(conn *websocket.Conn, getConnectedClientsRequest proje
 
 	var users []string = make([]string, 0, len(proj_wsConn[getConnectedClientsRequest.BaseRequest.ResId]))
 
-	users = make([]string, 0, len(proj_wsConn[getConnectedClientsRequest.BaseRequest.ResId]))
-
 	for _, value := range proj_wsConn[getConnectedClientsRequest.BaseRequest.ResId] {
 
 		users = append(users, value.Username)
 	}
 
-	SendWebSocketMessage(conn, baseModels.NewSuccessResponse(getConnectedClientsRequest.BaseRequest.Tag, map[string]interface{}{"Users": users}))
+	SendWebSocketMessage(conn, baseModels.NewSuccessResponse(getConnectedClientsRequest.BaseRequest.Tag, map[string]interface{}{"SubscribedUsers": users}))
 }
 
 func SendWebSocketMessage(conn *websocket.Conn, message interface{}) error {

@@ -171,6 +171,32 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 						projectModels.GetCollaborators(wsConn, ProjectGetCollaboratorsRequest)
 
+					case "GetFiles":
+
+						// {"Resource":"Project", "Action":"GetFiles", "ResId": "561987174357413b14000002", "Username":"fahslaj", "Token": "token-fahslaj"}
+						var projectFilesRequest projectRequests.ProjectGetFilesRequest
+						if err := json.Unmarshal(message, &projectFilesRequest); err != nil {
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
+							break
+						}
+						// Add BaseRequest reference
+						projectFilesRequest.BaseRequest = baseRequestObj
+
+						projectModels.GetFiles(wsConn, projectFilesRequest)
+
+					case "Subscribe":
+
+						// {"Resource":"Project", "Action":"Subscribe", "Projects":["5629a063111aeb63cf000001"], "Username":"abcd", "Token": "token-fahslaj"}
+						var projectSubscribeRequest projectRequests.ProjectSubscribeRequest
+						if err := json.Unmarshal(message, &projectSubscribeRequest); err != nil {
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
+							break
+						}
+						// Add BaseRequest reference
+						projectSubscribeRequest.BaseRequest = baseRequestObj
+
+						projectModels.Subscribe(wsConn, projectSubscribeRequest)
+
 					case "Delete":
 					// TODO
 
@@ -253,6 +279,19 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 						fileModels.PullFile(wsConn, filePullRequest)
 
+					case "Projects":
+
+						// {"Resource":"User", "Action":"Projects", "Username":"abcd", "Token": "token-fahslaj"}
+						var userProjectsRequest userRequests.UserProjectsRequest
+						if err := json.Unmarshal(message, &userProjectsRequest); err != nil {
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
+							break
+						}
+						// Add BaseRequest reference
+						userProjectsRequest.BaseRequest = baseRequestObj
+
+						userModels.UserProjects(wsConn, userProjectsRequest)
+
 					default:
 						baseModels.NewFailResponse(-3, baseRequestObj.Tag, map[string]interface{}{"Action": baseRequestObj.Action})
 						break
@@ -292,19 +331,6 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						//Check username/pw, login if needed.
 						userModels.LoginUser(wsConn, userLoginRequest)
 
-					case "Subscribe":
-
-						// {"Resource":"User", "Action":"Subscribe", "Projects":["5629a063111aeb63cf000001"], "Username":"abcd", "Token": "token-fahslaj"}
-						var userSubscribeRequest userRequests.UserSubscribeRequest
-						if err := json.Unmarshal(message, &userSubscribeRequest); err != nil {
-							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
-							break
-						}
-						// Add BaseRequest reference
-						userSubscribeRequest.BaseRequest = baseRequestObj
-
-						userModels.Subscribe(wsConn, userSubscribeRequest)
-
 					case "Lookup":
 
 						// {"Resource":"User", "Action":"Lookup", "LookupUsername":"abcd", "Username":"abcd", "Token": "token-fahslaj"}
@@ -317,6 +343,19 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						userLookupRequest.BaseRequest = baseRequestObj
 
 						userModels.LookupUser(wsConn, userLookupRequest)
+
+					case "Projects":
+
+						// {"Resource":"User", "Action":"Projects", "Username":"abcd", "Token": "token-fahslaj"}
+						var userProjectsRequest userRequests.UserProjectsRequest
+						if err := json.Unmarshal(message, &userProjectsRequest); err != nil {
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
+							break
+						}
+						// Add BaseRequest reference
+						userProjectsRequest.BaseRequest = baseRequestObj
+
+						userModels.UserProjects(wsConn, userProjectsRequest)
 
 					//TODO: maybe delete?
 
