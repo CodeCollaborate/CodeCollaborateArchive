@@ -14,11 +14,11 @@ func scrunchDB(fileID string) {
 		LogWarn("scrunchDB: passed an empty string")
 		return
 	}
-	go goroutineRunScrunch(fileID)
+	go goScrunchDB(fileID)
 	return
 }
 
-func goroutineRunScrunch(fileID string) {
+func goScrunchDB(fileID string) {
 
 	cmd := exec.Command("java", "-jar", "Scrunching.jar", fileID)
 	err := cmd.Start()
@@ -76,5 +76,5 @@ func correctFileNotFound(fileID string) {
 		return
 	}
 
-	goroutineRunScrunch(fileID)
+	goScrunchDB(fileID)
 }
