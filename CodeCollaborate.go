@@ -197,6 +197,19 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 
 						projectModels.Subscribe(wsConn, projectSubscribeRequest)
 
+					case "Unsubscribe":
+
+						// {"Resource":"Project", "Action":"Unsubscribe", "Projects":["5629a063111aeb63cf000001"], "Username":"abcd", "Token": "token-fahslaj"}
+						var projectUnsubscribeRequest projectRequests.ProjectUnsubscribeRequest
+						if err := json.Unmarshal(message, &projectUnsubscribeRequest); err != nil {
+							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))
+							break
+						}
+						// Add BaseRequest reference
+						projectUnsubscribeRequest.BaseRequest = baseRequestObj
+
+						projectModels.Unsubscribe(wsConn, projectUnsubscribeRequest)
+
 					case "Delete":
 					// TODO
 
@@ -269,6 +282,8 @@ func handleWSConn(responseWriter http.ResponseWriter, request *http.Request) {
 						fileModels.InsertChange(wsConn, fileChangeRequest)
 
 					case "Pull":
+						// {"Tag": 112, "Action": "Pull", "Resource": "File", "ResId": "5629a0c2111aeb63cf000002", "Username":"fahslaj", "Token": "token-fahslaj"}
+						// Deserialize from JSON
 						var filePullRequest fileRequests.FilePullRequest
 						if err := json.Unmarshal(message, &filePullRequest); err != nil {
 							managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-1, baseRequestObj.Tag, nil))

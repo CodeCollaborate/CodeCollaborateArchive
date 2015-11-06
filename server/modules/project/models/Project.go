@@ -194,27 +194,60 @@ func GetFiles(wsConn *websocket.Conn, projectFilesRequest projectRequests.Projec
 
 func Subscribe(wsConn *websocket.Conn, subscriptionRequest projectRequests.ProjectSubscribeRequest) {
 
-	project := subscriptionRequest.BaseRequest.ResId
+	projectId := subscriptionRequest.BaseRequest.ResId
 
-	proj, err := GetProjectById(project)
+	proj, err := GetProjectById(projectId)
 
 	if err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-200, subscriptionRequest.BaseRequest.Tag, nil))
 		return
 	}
 
-	// TODO: Add fail message if permission denied
-	for key, _ := range proj.Permissions {
-		if key == subscriptionRequest.BaseRequest.Username {
-			if (!managers.WebSocketSubscribeProject(wsConn, subscriptionRequest.BaseRequest.Username, project)) {
+	hasPermission := false
+	for key, value := range proj.Permissions {
+		if ((key == subscriptionRequest.BaseRequest.Username || key == "*") && value >= 1) {
+			if (!managers.WebSocketSubscribeProject(wsConn, subscriptionRequest.BaseRequest.Username, projectId)) {
 				managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-206, subscriptionRequest.BaseRequest.Tag, nil))
 				return
 			}
+			hasPermission = true
 		}
 	}
 
-	managers.NotifyProjectClients(project, subscriptionRequest.GetNotification(), wsConn)
+	if (!hasPermission){
+		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-208, subscriptionRequest.BaseRequest.Tag, nil))
+		return
+	}
+
+	managers.NotifyProjectClients(projectId, subscriptionRequest.GetNotification(), wsConn)
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(subscriptionRequest.BaseRequest.Tag, nil))
+}
+
+func Unsubscribe(wsConn *websocket.Conn, unsubscriptionRequest projectRequests.ProjectUnsubscribeRequest) {
+
+//	project := subscriptionRequest.BaseRequest.ResId
+//
+//	proj, err := GetProjectById(project)
+//
+//	if err != nil {
+//		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-200, subscriptionRequest.BaseRequest.Tag, nil))
+//		return
+//	}
+//
+//	// TODO: Add fail message if permission denied
+//	for key, _ := range proj.Permissions {
+//		if key == subscriptionRequest.BaseRequest.Username {
+//			if (!managers.WebSocketSubscribeProject(wsConn, subscriptionRequest.BaseRequest.Username, project)) {
+//				managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-206, subscriptionRequest.BaseRequest.Tag, nil))
+//				return
+//			}
+//		}
+//	}
+//
+//	managers.NotifyProjectClients(project, subscriptionRequest.GetNotification(), wsConn)
+//	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(subscriptionRequest.BaseRequest.Tag, nil))
+
+	managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-4, unsubscriptionRequest.BaseRequest.Tag, nil))
 }
 
 // Delete project (?)

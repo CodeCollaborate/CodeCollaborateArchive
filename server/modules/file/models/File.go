@@ -206,7 +206,7 @@ func PullFile(wsConn *websocket.Conn, filePullRequest fileRequests.FilePullReque
 		return
 	}
 
-	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(filePullRequest.BaseRequest.Tag, map[string]interface{}{"FileBytes": fileBytes, "Changes": changes}))
+	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(filePullRequest.BaseRequest.Tag, map[string]interface{}{"File": file, "FileBytes": fileBytes, "Changes": changes}))
 }
 
 func GetFileById(id string) (*File, error) {
