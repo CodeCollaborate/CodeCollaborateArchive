@@ -27,7 +27,8 @@ public class Scrunching {
 
     public static void main(String[] args) {
         if (args.length < 1) {
-            throw new RuntimeException("No fileId supplied");
+            System.out.println("Scrunching: Improper number of arguments");
+            System.exit(60);
         }
         String fileId = args[0];
 
@@ -38,6 +39,12 @@ public class Scrunching {
         MongoDatabase db = mongoClient.getDatabase("CodeCollaborate");
 
         Document dbFileEntry = db.getCollection("Files").find(new Document("_id", fileId)).first();
+
+        if (dbFileEntry == null) {
+            System.out.println("Scrunching: No file with that entry");
+            System.exit(61);
+        }
+
         String rawPath = "files/" + dbFileEntry.get("project") + "/" + dbFileEntry.get("relative_path") + dbFileEntry.get("name");
 
         Path path = Paths.get(rawPath);
@@ -50,8 +57,8 @@ public class Scrunching {
         try {
             fileIn = new BufferedReader(new FileReader(filePath));
         } catch (FileNotFoundException e) {
-            System.out.println("File not found");
-            System.exit(1);
+            System.out.println("Scrunching: File not found");
+            System.exit(62);
         }
 
         StringBuilder stringBuilder = new StringBuilder();
@@ -62,8 +69,8 @@ public class Scrunching {
                 stringBuilder.append(line).append("\n");
             }
         } catch (IOException e) {
-            System.out.println("Unknown error while reading file");
-            System.exit(1);
+            System.out.println("Scrunching: Unknown error while reading file");
+            System.exit(63);
         } finally {
             try {
                 if (fileIn != null) {
@@ -93,8 +100,8 @@ public class Scrunching {
                 fileString = (String) applied[0];
                 idsToRemove.add(key);
             } else {
-                System.out.println("Can't apply patch: " + key + " to file: " + filePath);
-                System.exit(1);
+                System.out.println("Scrunching: Can't apply patch: " + key + " to file: " + filePath);
+                System.exit(64);
             }
         }
 
@@ -102,7 +109,7 @@ public class Scrunching {
         // have to do a bad way because collection.remove is no longer a thing
         for (String id : idsToRemove) {
             if (!changes.deleteOne(new Document("_id", id)).wasAcknowledged()) {
-                System.out.println("ERROR: unable to delete file");
+                System.out.println("Scrunching: ERROR: unable to delete file");
             }
         }
 
@@ -148,8 +155,8 @@ public class Scrunching {
         try {
             patchList = differ.patch_fromText(patch);
         } catch (IllegalArgumentException e) {
-            System.out.println("Unable to compile patch: \n" + patch);
-            System.exit(1);
+            System.out.println("Scrunching: Unable to compile patch: \n" + patch);
+            System.exit(65);
         }
 
         LinkedList<DiffMatchPatch.Patch> patchLinkedList = new LinkedList<DiffMatchPatch.Patch>(patchList);

@@ -27,7 +27,7 @@ type File struct {
 	filePath     string `bson:"-",json:"-"`    // Temp filepath cached variable
 }
 
-func (file File) getPath() string {
+func (file File) GetPath() string {
 	if (file.filePath == "") {
 		// Change to use byte buffer for efficiency
 		file.filePath = "files/" + file.Project + "/" + file.RelativePath + file.Name
@@ -88,7 +88,7 @@ func CreateFile(wsConn *websocket.Conn, fileCreateRequest fileRequests.FileCreat
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil))
 		return
 	}
-	err = ioutil.WriteFile(file.getPath(), fileCreateRequest.FileBytes, os.ModeExclusive)
+	err = ioutil.WriteFile(file.GetPath(), fileCreateRequest.FileBytes, os.ModeExclusive)
 	if err != nil {
 		managers.LogError("Failed to write file", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-301, fileCreateRequest.BaseRequest.Tag, nil))
@@ -166,7 +166,7 @@ func DeleteFile(wsConn *websocket.Conn, fileDeleteRequest fileRequests.FileDelet
 		return
 	}
 
-	err = os.Remove(file.getPath())
+	err = os.Remove(file.GetPath())
 
 	err = collection.Remove(bson.M{"_id": fileDeleteRequest.BaseRequest.ResId})
 	if err != nil {
@@ -188,11 +188,11 @@ func PullFile(wsConn *websocket.Conn, filePullRequest fileRequests.FilePullReque
 	}
 
 	// Read file from disk
-	if _, err := os.Stat(file.getPath()); os.IsNotExist(err) {
+	if _, err := os.Stat(file.GetPath()); os.IsNotExist(err) {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(filePullRequest.BaseRequest.Tag, map[string]interface{}{"FileBytes": "", "Changes": ""}))
 		return
 	}
-	fileBytes, err := ioutil.ReadFile(file.getPath())
+	fileBytes, err := ioutil.ReadFile(file.GetPath())
 	if err != nil {
 		managers.LogError("Failed to read from file", err)
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-301, filePullRequest.BaseRequest.Tag, nil))
@@ -206,7 +206,7 @@ func PullFile(wsConn *websocket.Conn, filePullRequest fileRequests.FilePullReque
 		return
 	}
 
-	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(filePullRequest.BaseRequest.Tag, map[string]interface{}{"FileBytes": fileBytes, "Changes": changes}))
+	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(filePullRequest.BaseRequest.Tag, map[string]interface{}{"File": file, "FileBytes": fileBytes, "Changes": changes}))
 }
 
 func GetFileById(id string) (*File, error) {

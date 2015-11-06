@@ -9,6 +9,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/models"
 	"github.com/gorilla/websocket"
+	"github.com/CodeCollaborate/CodeCollaborate/server/managers/scrunching"
 )
 
 type FileChange struct {
@@ -76,6 +77,11 @@ func InsertChange(wsConn *websocket.Conn, fileChangeRequest fileRequests.FileCha
 	if err != nil {
 		managers.SendWebSocketMessage(wsConn, baseModels.NewFailResponse(-400, fileChangeRequest.BaseRequest.Tag, nil))
 		return
+	}
+
+	// TODO: Change when fileVersion is changed to atomic int
+	if (fileChange.Version % 100 == 0) {
+		scrunching.ScrunchDB(fileChange.FileId)
 	}
 
 	managers.SendWebSocketMessage(wsConn, baseModels.NewSuccessResponse(fileChangeRequest.BaseRequest.Tag, map[string]interface{}{"FileVersion": fileChangeRequest.FileVersion}))
