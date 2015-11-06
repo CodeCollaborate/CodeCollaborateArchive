@@ -24,6 +24,34 @@ func WebSocketSubscribeProject(conn *websocket.Conn, username string, projectId 
 		wsConn.WSConn = conn
 
 		webSocket_wsConn[conn] = wsConn
+	} else {
+		wsConn = webSocket_wsConn[conn];
+	}
+
+	if (proj_wsConn[projectId] == nil) {
+		proj_wsConn[projectId] = []*models.WSConnection{}
+	}
+	if (wsConn_proj[wsConn] == nil) {
+		wsConn_proj[wsConn] = []string{}
+	}
+
+	// TODO: Change to make sure that connections cannot subscribe to the same project multiple times.
+	proj_wsConn[projectId] = append(proj_wsConn[projectId], wsConn)
+	wsConn_proj[wsConn] = append(wsConn_proj[wsConn], projectId)
+
+	return true
+}
+
+func WebSocketUnsubscribeProject(conn *websocket.Conn, username string, projectId string) bool {
+
+	var wsConn *models.WSConnection
+
+	if (webSocket_wsConn[conn] == nil) {
+		wsConn = new(models.WSConnection)
+		wsConn.Username = username
+		wsConn.WSConn = conn
+
+		webSocket_wsConn[conn] = wsConn
 	} else if (webSocket_wsConn[conn].Username == username && webSocket_wsConn[conn].WSConn == conn) {
 		return true
 	} else {

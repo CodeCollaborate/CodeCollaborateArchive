@@ -8,6 +8,7 @@ var StatusCodes = map[int]string{
 	-1: "Invalid JSON Object",
 	-2: "Invalid resource type",
 	-3: "Invalid action",
+	-4: "Method not yet implemented",
 
 	// 100s - User Errors
 	-100: "No such user found",
@@ -27,6 +28,7 @@ var StatusCodes = map[int]string{
 	-205: "Error revoking permissions: Must have an owner",
 	-206: "Error subscribing to project",
 	-207: "Error modifying permissions: You do not have admin privileges",
+	-208: "Insufficient privileges to perform action",
 
 	// 300s - File Errors
 	-300: "No such file found",
