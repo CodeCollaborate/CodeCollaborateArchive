@@ -1,4 +1,4 @@
-package managers
+package WSConnection
 
 import (
 	"github.com/gorilla/websocket"
@@ -6,7 +6,8 @@ import (
 	"github.com/CodeCollaborate/CodeCollaborate/server/modules/base/models"
 	"github.com/CodeCollaborate/CodeCollaborate/server/managers/models"
 	"github.com/CodeCollaborate/CodeCollaborate/server/modules/project/requests"
-	"github.com/CodeCollaborate/CodeCollaborate/server/modules/file/models"
+	"github.com/CodeCollaborate/CodeCollaborate/server/managers/scrunching"
+	"github.com/CodeCollaborate/CodeCollaborate/server/managers"
 )
 
 var proj_wsConn = map[string][]*models.WSConnection{} // maps projectId to WSConnection instances
@@ -56,15 +57,8 @@ func WebSocketDisconnected(conn *websocket.Conn) {
 					proj_wsConn[project][len(proj_wsConn[project]) - 1] = nil // or the zero value of T
 					proj_wsConn[project] = proj_wsConn[project][:len(proj_wsConn[project]) - 1]
 					if len(proj_wsConn[project]) == 0 {
-						files, err := fileModels.GetFilesByProjectId(project)
-						if err {
-							LogError("Error retreaving project files on WS disconnect", err)
-						} else {
-							for _, file := range files {
-								scrunchDB(file.Id)
-							}
-							delete(proj_wsConn, project)
-						}
+						scrunching.ScrunchProject(project)
+						delete(proj_wsConn, project)
 					}
 				}
 			}
@@ -102,16 +96,16 @@ func GetSubscribedClients(conn *websocket.Conn, getConnectedClientsRequest proje
 
 func SendWebSocketMessage(conn *websocket.Conn, message interface{}) error {
 	respBytes, err := json.Marshal(message)
-	LogDebug(string(respBytes[:]))
+	managers.LogDebug(string(respBytes[:]))
 
 	if err != nil {
-		LogError("Error serializing response to JSON:", err)
+		managers.LogError("Error serializing response to JSON:", err)
 		return err
 	}
 
 	err = conn.WriteMessage(websocket.TextMessage, respBytes)
 	if err != nil {
-		LogError("Error writing to WebSocket:", err)
+		managers.LogError("Error writing to WebSocket:", err)
 		return err
 	}
 	return nil
